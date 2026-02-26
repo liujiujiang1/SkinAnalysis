@@ -1,8 +1,8 @@
-# 皮肤康-SkinDiagnose 
+# 皮肤智诊-SkinAnalysis 
 
-[(点击进入GitHub项目主页)](https://github.com/AnonymMOMO/SkinDiagnose)
+[(点击进入GitHub项目主页)](https://github.com/AnonymMOMO/SkinAnalysis)
 
-皮肤康（SkinDiagnose）是一款基于深度学习技术的皮肤病诊断系统，并采用了前后端分离技术对模型进行服务封装。
+皮肤智诊（SkinAnalysis）是一款基于深度学习技术的皮肤病诊断系统，并采用了前后端分离技术对模型进行服务封装。
 
 前端采用Vue.js作为开发框架，
 后端采用双后端混合模式，
@@ -40,7 +40,7 @@
 # 2. 开始
 
 ## 2.1 启动应用
-启动Docker，打开命令行终端，进入到SkinDiagnose项目根目录下，输入`docker-compose up --build`指令
+启动Docker，打开命令行终端，进入到SkinAnalysis项目根目录下，输入`docker-compose up --build`指令
 
 ## 2.2 进入应用
 打开浏览器

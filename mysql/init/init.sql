@@ -1,7 +1,7 @@
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS `SkinDiagnose`  DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `SkinAnalysis`  DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-use SkinDiagnose;
+use SkinAnalysis;
 
 /*
  Navicat Premium Data Transfer
@@ -10,7 +10,7 @@ use SkinDiagnose;
  Source Server Type    : MySQL
  Source Server Version : 80300
  Source Host           : localhost:3306
- Source Schema         : SkinDiagnose
+ Source Schema         : SkinAnalysis
 
  Target Server Type    : MySQL
  Target Server Version : 80300
