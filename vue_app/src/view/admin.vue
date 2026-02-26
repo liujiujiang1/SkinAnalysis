@@ -7,7 +7,7 @@
             <div class="content">
                 <el-form :rules="rules" :model="form" ref="ruleFormRef" v-loading="loading">
                     <el-form-item>
-                        <p class="login_title">欢迎回来!</p>
+                        <p class="login_title">欢迎回来11!</p>
                     </el-form-item>
                     <el-form-item prop="username">
                         <el-input class="username"

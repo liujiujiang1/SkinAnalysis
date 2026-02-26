@@ -12,7 +12,7 @@
             <div class="right-box">
                 <div class="right-content">
                     <el-form :rules="rules" :model="form" ref="ruleFormRef" v-loading="loading">
-                            <p id="login_title">欢迎回来!</p>
+                            <p id="login_title">欢11迎回来!</p>
                         <el-form-item prop="username">
                             <el-input class="username"
                                       v-model="form.username"
