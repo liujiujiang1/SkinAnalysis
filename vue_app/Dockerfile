@@ -17,5 +17,5 @@ FROM nginx:1.26.0 as production-stage
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=build-stage /vue_app/dist /usr/share/nginx/html
 
-EXPOSE 8080
+EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
