@@ -1,7 +1,5 @@
 # 皮肤智诊-SkinAnalysis 
 
-[(点击进入GitHub项目主页)](https://github.com/AnonymMOMO/SkinAnalysis)
-
 皮肤智诊（SkinAnalysis）是一款基于深度学习技术的皮肤病诊断系统，并采用了前后端分离技术对模型进行服务封装。
 
 前端采用Vue.js作为开发框架，
