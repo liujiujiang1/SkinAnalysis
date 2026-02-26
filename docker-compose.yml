@@ -12,7 +12,7 @@ services:
       - shareNet
     ports:
       - 3307:3306
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --lower_case_table_names=1 --default-authentication-plugin=mysql_native_password
   flask-service:
     container_name: flask_container
     build: ./onnx_app
