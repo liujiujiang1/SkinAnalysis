@@ -22,6 +22,8 @@
                             size="large"
                             clearable
                             aria-label="用户名输入框"
+                            inputmode="text"
+                            autocomplete="username"
                         >
                         </el-input>
                     </el-form-item>
@@ -35,6 +37,8 @@
                             size="large"
                             show-password
                             aria-label="密码输入框"
+                            inputmode="text"
+                            autocomplete="current-password"
                         >
                         </el-input>
                     </el-form-item>
@@ -256,6 +260,13 @@ export default {
         border-color: #22C55E;
     }
 
+    @media (hover: none) and (pointer: coarse) {
+        .el-input__wrapper:active {
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
+            border-color: #22C55E;
+        }
+    }
+
     .el-input__inner {
         color: #0F172A;
     }
@@ -334,53 +345,131 @@ export default {
 
     @media (max-width: 480px) {
         .container {
-            padding: 16px;
-            align-items: center;
-            padding-top: 40px;
+            padding: 0;
+            align-items: stretch;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .content {
             max-width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .login-card {
-            padding: 28px 20px;
-            border-radius: 16px;
+            padding: 40px 24px 48px;
+            border-radius: 0;
             width: 100%;
             box-sizing: border-box;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: none;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .card-header {
+            margin-bottom: 36px;
         }
 
         .login-title {
-            font-size: 26px;
-            margin-bottom: 6px;
+            font-size: 32px;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
         }
 
         .login-subtitle {
-            font-size: 13px;
-            margin-bottom: 28px;
+            font-size: 15px;
+            margin-bottom: 0;
         }
 
         .el-form-item {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
+        }
+
+        .el-input {
+            font-size: 18px;
         }
 
         .el-input__wrapper {
-            min-height: 48px;
-            padding: 10px 14px;
+            min-height: 56px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .el-input__prefix-inner {
+            font-size: 20px;
+        }
+
+        .el-input__inner {
+            font-size: 18px;
         }
 
         .login-btn {
-            height: 50px;
-            min-height: 50px;
+            height: 56px;
+            min-height: 56px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 20px;
+            border-radius: 14px;
         }
 
         .logo-icon {
-            width: 56px;
-            height: 56px;
+            width: 72px;
+            height: 72px;
+            margin-bottom: 24px;
         }
 
         .logo-icon .el-icon {
+            font-size: 36px;
+        }
+
+        .el-alert {
+            top: 12px;
+            max-width: calc(100vw - 24px);
+        }
+    }
+
+    @media (max-width: 375px) {
+        .login-card {
+            padding: 36px 20px 44px;
+        }
+
+        .login-title {
             font-size: 28px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon .el-icon {
+            font-size: 32px;
+        }
+
+        .el-input__wrapper {
+            min-height: 52px;
+            padding: 12px 16px;
+        }
+
+        .login-btn {
+            height: 52px;
+            min-height: 52px;
+            font-size: 17px;
         }
     }
 

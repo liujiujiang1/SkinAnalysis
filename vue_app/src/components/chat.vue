@@ -50,8 +50,9 @@
   
 <script>
 import axios from 'axios';
-import {api_key} from '../../gemini_api-key.js'
 import { ChatDotRound, Promotion } from '@element-plus/icons-vue';
+
+import {api_key} from '../../zhipu_api-key.js'
 
 export default {
     components: {
@@ -96,7 +97,7 @@ export default {
                 }, 30);
             } catch (error) {
                 this.loading = false;
-                this.messages.push({ content: '出现问题，请检查Gemini API-Key是否正确，或是否正确使用代理！', sender: 'bot' });
+                this.messages.push({ content: '出现问题，请检查智普AI API-Key是否正确！', sender: 'bot' });
                 this.$nextTick();
                 this.scrollToBottom();
             }
@@ -104,17 +105,22 @@ export default {
         async getBotReply(message) {
             try {
                 const response = await axios.post(
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key='+api_key,
+                    'https://open.bigmodel.cn/api/paas/v4/chat/completions',
                     {
-                        contents:[{parts:[{text: message+"（请按照皮肤专科医生的专业口吻来回答问题）"}]}]
+                        model: 'glm-4-flash',
+                        messages: [
+                            {role: 'system', content: '你是一位专业的皮肤科医生，请用专业、友好的口吻回答用户关于皮肤健康的问题。'},
+                            {role: 'user', content: message}
+                        ]
                     },
                     {
                         headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${api_key}`
                         }
                     }
                 );
-                return response.data["candidates"][0]["content"]["parts"][0]["text"];
+                return response.data.choices[0].message.content;
             } catch (error) {
                 throw error;
             }

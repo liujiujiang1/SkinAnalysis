@@ -1,0 +1,1 @@
+export const api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //请将sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx替换成您申请的通义千问API-Key，否则无法正常使用问答功能！

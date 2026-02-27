@@ -29,6 +29,8 @@
                                 clearable
                                 aria-label="用户名输入框"
                                 tabindex="1"
+                                inputmode="text"
+                                autocomplete="username"
                             >
                             </el-input>
                         </el-form-item>
@@ -44,6 +46,8 @@
                                 aria-label="密码输入框"
                                 tabindex="2"
                                 @keyup.enter="login"
+                                inputmode="text"
+                                autocomplete="current-password"
                             >
                             </el-input>
                         </el-form-item>
@@ -497,6 +501,13 @@ export default {
         background: white;
     }
 
+    @media (hover: none) and (pointer: coarse) {
+        .el-input__wrapper:active {
+            box-shadow: 0 0 0 3px #0891B2 inset, 0 0 0 6px rgba(8, 145, 178, 0.2);
+            background: white;
+        }
+    }
+
     .login-btn {
         width: 100%;
         height: 52px;
@@ -632,51 +643,115 @@ export default {
 
     @media (max-width: 480px) {
         .container {
-            padding: 12px;
-            align-items: flex-start;
-            padding-top: 24px;
+            padding: 0;
+            align-items: stretch;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .content {
-            border-radius: 12px;
+            border-radius: 0;
+            max-width: 100%;
+            box-shadow: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .right-box {
-            padding: 28px 20px;
+            padding: 32px 24px 40px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .right-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 0;
         }
 
         .logo-icon {
-            width: 56px;
-            height: 56px;
+            width: 72px;
+            height: 72px;
+            margin-bottom: 20px;
         }
 
         .logo-icon .el-icon {
-            font-size: 28px;
+            font-size: 36px;
         }
 
         .login-title {
-            font-size: 26px;
-            margin-bottom: 6px;
+            font-size: 32px;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
 
         .login-subtitle {
-            font-size: 13px;
-            margin-bottom: 28px;
+            font-size: 15px;
+            margin-bottom: 36px;
+            color: #64748B;
         }
 
         .el-form-item {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
+        }
+
+        .el-input {
+            font-size: 18px;
         }
 
         .el-input__wrapper {
-            min-height: 48px;
-            padding: 10px 14px;
+            min-height: 56px;
+            padding: 14px 18px;
+            border-radius: 14px;
+        }
+
+        .el-input__prefix-inner {
+            font-size: 20px;
         }
 
         .login-btn,
         .register-btn {
-            height: 50px;
-            min-height: 50px;
+            height: 56px;
+            min-height: 56px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 16px;
+            border-radius: 14px;
+        }
+
+        .logo-section {
+            margin-bottom: 28px;
+        }
+
+        .el-alert {
+            top: 12px;
+            max-width: calc(100vw - 24px);
+        }
+    }
+
+    @media (max-width: 375px) {
+        .right-box {
+            padding: 28px 20px 36px;
+        }
+
+        .login-title {
+            font-size: 28px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+        }
+
+        .logo-icon .el-icon {
+            font-size: 32px;
         }
     }
 
