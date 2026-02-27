@@ -1,17 +1,51 @@
 <template>
-    <div class="layout-box">
-        <div class="content-box">
-            <div id="trend"></div>
-            <div id="total"></div>
+    <div class="statistics-container">
+        <div class="page-header">
+            <h1 class="page-title">数据统计</h1>
+            <p class="page-subtitle">疾病诊断数据分析</p>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card trend-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <el-icon class="title-icon"><TrendCharts /></el-icon>
+                        <span>疾病趋势</span>
+                    </div>
+                    <el-select v-model="timeSelect" @change="changeHandle" class="time-selector">
+                        <el-option
+                            v-for="item in timeOptions"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </div>
+                <div id="trend" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card total-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <el-icon class="title-icon"><DataAnalysis /></el-icon>
+                        <span>疾病统计</span>
+                    </div>
+                </div>
+                <div id="total" class="chart-container"></div>
+            </div>
         </div>
     </div>
-
 </template>
 
 <script>
 import * as echarts from 'echarts'
+import { TrendCharts, DataAnalysis } from '@element-plus/icons-vue'
 export default {
     name: "statistics",
+    components: {
+        TrendCharts,
+        DataAnalysis
+    },
     data() {
         this.trendLine = null
         this.totalBar = null
@@ -56,11 +90,29 @@ export default {
             .then((response)=>{
                 this.drawLine()
             })
+        window.addEventListener('resize', this.handleResize)
+    },
+    beforeUnmount() {
+        window.removeEventListener('resize', this.handleResize)
+        if (this.trendLine) {
+            this.trendLine.dispose()
+        }
+        if (this.totalBar) {
+            this.totalBar.dispose()
+        }
     },
     methods:{
+        handleResize() {
+            if (this.trendLine) {
+                this.trendLine.resize()
+            }
+            if (this.totalBar) {
+                this.totalBar.resize()
+            }
+        },
         changeHandle(){
-            this.getInfo()
-                .then((response)=>{
+            Promise.all([this.getTrend(), this.getTotal()])
+                .then(() => {
                     this.drawLine()
                     this.drawBar()
                 })
@@ -84,21 +136,16 @@ export default {
                 this.totalBar.dispose()
             this.totalBar = echarts.init(document.getElementById('total'))
             let barOption = {
-                title: {
-                    text:"各项疾病统计",
-                    textStyle:{
-                        fontSize: 14
-                    }
-                },
                 tooltip: {
                     trigger: 'axis',
-                    backgroundColor: "white", // 提示框浮层的背景颜色
-                    padding: 15, // 提示框浮层内边距，单位px
+                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                    padding: [12, 16],
                     textStyle: {
-                        color: "black", // 文字的颜色
-                        fontStyle: "normal", // 文字字体的风格（'normal'，无样式；'italic'，斜体；'oblique'，倾斜字体）
-                        fontWeight: "bold", // 文字字体的粗细（'normal'，无样式；'bold'，加粗；'bolder'，加粗的基础上再加粗；'lighter'，变细；数字定义粗细也可以，取值范围100至700）
+                        color: "#1e293b",
+                        fontWeight: "500",
                     },
+                    borderColor: "#e2e8f0",
+                    borderWidth: 1,
                     valueFormatter: (value) => {
                         return value;
                     }
@@ -106,17 +153,42 @@ export default {
                 grid: {
                     left: '3%',
                     right: '4%',
-                    bottom: '3%',
+                    bottom: '10%',
+                    top: '10%',
                     containLabel: true
                 },
-                color: ['#cd9823', '#bf7545', '#f22304', '#a1ba06', '#2e92c2', '#f79e88', '#b44ab3'],
+                color: ['#0891B2', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'],
                 xAxis: {
                     type: 'category',
                     boundaryGap: true,
-                    data: ['NV', 'MEL', 'BCC', 'AKIEC', 'BKL', 'DF',  'VASC']
+                    data: ['NV', 'MEL', 'BCC', 'AKIEC', 'BKL', 'DF',  'VASC'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#64748b',
+                        fontSize: 12
+                    }
                 },
                 yAxis: {
-                    type: 'value'
+                    type: 'value',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#64748b',
+                        fontSize: 12
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f1f5f9',
+                            type: 'dashed'
+                        }
+                    }
                 },
                 series: []
             }
@@ -129,15 +201,21 @@ export default {
                 data: [],
                 itemStyle: {
                     normal: {
-    　　　　　　　　    //这里是重点
+                        borderRadius: [8, 8, 0, 0],
                         color: function(params) {
-                        //注意，如果颜色太少的话，后面颜色不会自动循环，最好多定义几个颜色
-                                    var colorList = ['#cd9823', '#bf7545', '#f22304', '#a1ba06', '#2e92c2', '#f79e88', '#b44ab3'];
-                                    return colorList[params.dataIndex]
-                                }
+                            var colorList = ['#0891B2', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
+                            return colorList[params.dataIndex]
+                        }
                     }
                 },
-                barWidth: '50%'
+                barWidth: '50%',
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
             }
             for(var i=0; i<res.length; i++){
                 se.data.push(res[i]['count'])
@@ -166,46 +244,72 @@ export default {
                 this.trendLine.dispose()
             this.trendLine = echarts.init(document.getElementById('trend'))
             let lineOption = {
-                title: {
-                    text: '各项疾病趋势',
-                    textStyle:{
-                        fontSize: 14
-                    }
-                },
                 tooltip: {
                     trigger: 'axis',
-                    backgroundColor: "white", // 提示框浮层的背景颜色
-                    padding: 15, // 提示框浮层内边距，单位px
+                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                    padding: [12, 16],
                     textStyle: {
-                        color: "black", // 文字的颜色
-                        fontStyle: "normal", // 文字字体的风格（'normal'，无样式；'italic'，斜体；'oblique'，倾斜字体）
-                        fontWeight: "bold", // 文字字体的粗细（'normal'，无样式；'bold'，加粗；'bolder'，加粗的基础上再加粗；'lighter'，变细；数字定义粗细也可以，取值范围100至700）
+                        color: "#1e293b",
+                        fontWeight: "500",
                     },
+                    borderColor: "#e2e8f0",
+                    borderWidth: 1,
                     valueFormatter: (value) => {
                         return value;
                     }
                 },
                 legend: {
-                    data: ["NV", "MEL", "BCC", "AKIEC", "BKL", "DF", "VASC"]
+                    data: ["NV", "MEL", "BCC", "AKIEC", "BKL", "DF", "VASC"],
+                    top: 0,
+                    right: 0,
+                    textStyle: {
+                        color: '#64748b',
+                        fontSize: 12
+                    },
+                    itemWidth: 12,
+                    itemHeight: 12
                 },
                 grid: {
                     left: '3%',
                     right: '4%',
-                    bottom: '3%',
+                    bottom: '10%',
+                    top: '15%',
                     containLabel: true
                 },
-                color: ['#cd9823', '#bf7545', '#f22304', '#a1ba06', '#2e92c2', '#f79e88', '#b44ab3'],
+                color: ['#0891B2', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'],
                 xAxis: {
                     type: 'category',
                     boundaryGap: true,
                     axisLabel:{
                         interval:0,
                         rotate:40,
+                        color: '#64748b',
+                        fontSize: 11
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
                     },
                     data: []
                 },
                 yAxis: {
-                    type: 'value'
+                    type: 'value',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#64748b',
+                        fontSize: 12
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f1f5f9',
+                            type: 'dashed'
+                        }
+                    }
                 },
                 series: []
             }
@@ -282,11 +386,23 @@ export default {
                     name: key,
                     type: 'line',
                     data: dataList[key],
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 6,
                     lineStyle: {
-                        color: lineOption.color[index++]
+                        width: 2,
+                        color: lineOption.color[index]
+                    },
+                    itemStyle: {
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    },
+                    areaStyle: {
+                        opacity: 0.1
                     }
                 }
                 lineOption.series.push(se)
+                index++
             }
             console.log(lineOption.series)
             this.trendLine.setOption(lineOption);
@@ -296,21 +412,183 @@ export default {
 </script>
 
 <style scoped>
-    .layout-box{
-        width: 80vw;
-        height: 80vh;
-    }
-    .content-box{
-        margin-top: 5vh;
-        margin-left: 5vw;
-    }
-    #trend{
-        width: 80vw;
-        height: 40vh;
-    }
-    #total{
-        width: 80vw;
-        height: 40vh;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
+</style>
 
+<style lang="less" scoped>
+.statistics-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    padding: 24px;
+    box-sizing: border-box;
+    font-family: 'Noto Sans', sans-serif;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.chart-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        border-color: rgba(34, 197, 94, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.title-icon {
+    width: 24px;
+    height: 24px;
+    color: #22C55E;
+}
+
+.time-selector {
+    width: 120px;
+    
+    :deep(.el-input__wrapper) {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        box-shadow: none;
+        padding: 4px 12px;
+        min-height: 36px;
+        
+        &:hover {
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+        
+        &.is-focus {
+            border-color: #22C55E;
+            background: rgba(255, 255, 255, 0.15);
+        }
+    }
+    
+    :deep(.el-input__inner) {
+        color: #f8fafc;
+        font-size: 14px;
+    }
+    
+    :deep(.el-select__caret) {
+        color: #94a3b8;
+    }
+}
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+}
+
+@media (min-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .statistics-container {
+        padding: 16px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
+        font-size: 13px;
+    }
+    
+    .charts-grid {
+        gap: 16px;
+    }
+    
+    .chart-card {
+        padding: 16px;
+    }
+    
+    .card-title {
+        font-size: 16px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .time-selector {
+        width: 100%;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .statistics-container {
+        padding: 12px;
+    }
+    
+    .page-title {
+        font-size: 20px;
+    }
+    
+    .page-header {
+        margin-bottom: 20px;
+    }
+    
+    .chart-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
 </style>

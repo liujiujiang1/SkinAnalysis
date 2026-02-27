@@ -5,9 +5,7 @@ import{
 
 import home from '../view/home.vue'
 
-
 import userLogin from "../view/userLogin.vue"
-
 
 import admin from "../view/admin.vue"
 import background from "../view/background.vue"
@@ -28,11 +26,6 @@ const routes = [
     {
         path: "/",
         name: "home",
-        component: home
-    },
-    {
-        path: "/login",
-        name: "userLogin",
         component: userLogin
     },
     {
@@ -58,7 +51,7 @@ const routes = [
                     confirmButtonText: '返回',
                     type: "error",
                     callback: () => {
-                        router.push("/login").then()
+                        router.push("/").then()
                     }
                 }).then()
             }
