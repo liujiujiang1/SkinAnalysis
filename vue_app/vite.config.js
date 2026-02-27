@@ -13,14 +13,12 @@ export default defineConfig({
         port: 8088,
         proxy: {
             '/flask_api': {
-                target: 'http://flask-service:5000',    //在docker部署中，要记得更换成内部容器虚拟网的名称
-                changeOrigin: true,
-                rewrite: path => path.replace(/^\/flask_api/, "")
+                target: 'http://47.93.144.128:8080',
+                changeOrigin: true
             },
             '/spring_api': {
-                target: 'http://springboot-service:8889',  //在docker部署中，要记得更换成内部容器虚拟网的名称
-                changeOrigin: true,
-                rewrite: path => path.replace(/^\/spring_api/, "")
+                target: 'http://47.93.144.128:8080',
+                changeOrigin: true
             }
         }
     },
