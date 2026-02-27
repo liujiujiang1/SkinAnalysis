@@ -90,6 +90,7 @@ export default {
                     type:"warning"
                 })
             }else{
+                this.loading = true
                 let data = {
                     "username": this.form.username,
                     "password": this.form.password
@@ -107,18 +108,14 @@ export default {
                             sessionStorage.setItem('admin_name', this.form.username)
                             sessionStorage.setItem('admin_authenticated', 'true')
 
-                            this.loading = true
-                            this.timer = setTimeout(() => {
-                                this.loading = false;
-                            }, 1000)
                             this.errorCheck = false;
                             this.passCheck = true;
                             this.existCheck = false;
                             this.timer = setTimeout(() => {
+                                this.loading = false;
                                 this.$router.push('/admin/background')
                             }, 1000)
                         } else if (response.data === "InfoError") {
-                            this.loading = true
                             this.timer = setTimeout(() => {
                                 this.loading = false
                                 this.errorCheck = true;
@@ -126,7 +123,6 @@ export default {
                                 this.existCheck = false;
                             }, 1000)
                         } else if (response.data === "NotExist") {
-                            this.loading = true
                             this.timer = setTimeout(() => {
                                 this.loading = false
                                 this.errorCheck = false;
@@ -137,6 +133,7 @@ export default {
                     })
                     .catch((error) => {
                         console.log(error)
+                        this.loading = false
                         ElMessageBox.alert("系统异常，请检查并修复！",{
                             title:"警告",
                             confirmButtonText:"返回",
@@ -150,7 +147,7 @@ export default {
 </script>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 </style>
 
 <style lang="less" scoped>
@@ -172,7 +169,7 @@ export default {
         align-items: center;
         justify-content: center;
         padding: 16px;
-        font-family: 'Fira Sans', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
 
     .content {
@@ -187,6 +184,7 @@ export default {
         padding: 40px 32px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
     }
 
     .card-header {
@@ -198,12 +196,13 @@ export default {
         width: 64px;
         height: 64px;
         border-radius: 50%;
-        background: #22C55E;
+        background: #2563EB;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 20px;
-        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        transition: all 0.3s ease;
     }
 
     .logo-icon .el-icon {
@@ -251,24 +250,25 @@ export default {
     }
 
     .el-input__wrapper:hover {
-        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
-        border-color: #22C55E;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        border-color: #2563EB;
     }
 
     .el-input__wrapper.is-focus {
-        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
-        border-color: #22C55E;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+        border-color: #2563EB;
     }
 
     @media (hover: none) and (pointer: coarse) {
         .el-input__wrapper:active {
-            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
-            border-color: #22C55E;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+            border-color: #2563EB;
         }
     }
 
     .el-input__inner {
         color: #0F172A;
+        font-family: 'Inter', sans-serif;
     }
 
     .el-input__inner::placeholder {
@@ -285,7 +285,7 @@ export default {
         font-size: 16px;
         font-weight: 600;
         border-radius: 12px;
-        background: #22C55E;
+        background: #2563EB;
         border: none;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -293,12 +293,13 @@ export default {
         min-height: 52px;
         min-width: 52px;
         color: white;
-        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        font-family: 'Inter', sans-serif;
     }
 
     .login-btn:hover {
-        background: #16a34a;
-        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        background: #1D4ED8;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
     }
 
     .login-btn:active {

@@ -249,6 +249,7 @@ export default {
                     type:"warning"
                 })
             }else{
+                this.loading = true
                 let data = {
                     "username": this.form.username,
                     "password": this.form.password
@@ -259,18 +260,14 @@ export default {
                             sessionStorage.setItem('user_name', this.form.username)
                             sessionStorage.setItem('user_authenticated', 'true')
 
-                            this.loading = true
-                            this.timer = setTimeout(() => {
-                                this.loading = false;
-                            }, 1000)
                             this.errorCheck = false;
                             this.passCheck = true;
                             this.existCheck = false;
                             this.timer = setTimeout(() => {
+                                this.loading = false;
                                 this.$router.push('/user/analyse')
                             }, 1000)
                         } else if (response.data === "InfoError") {
-                            this.loading = true
                             this.timer = setTimeout(() => {
                                 this.loading = false
                                 this.errorCheck = true;
@@ -278,7 +275,6 @@ export default {
                                 this.existCheck = false;
                             }, 1000)
                         } else if (response.data === "NotExist") {
-                            this.loading = true
                             this.timer = setTimeout(() => {
                                 this.loading = false
                                 this.errorCheck = false;
@@ -289,6 +285,7 @@ export default {
                     })
                     .catch((error) => {
                         console.log(error)
+                        this.loading = false
                         ElMessageBox.alert("系统异常登录失败，请稍后重试或联系管理员！",{
                             title:"警告",
                             confirmButtonText:"返回",

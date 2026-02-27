@@ -415,14 +415,14 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 </style>
 
 <style lang="less" scoped>
 .manage-container {
     width: 100%;
     height: 100%;
-    font-family: 'Noto Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .page-header {
@@ -444,14 +444,15 @@ export default {
 
 .header-icon {
     font-size: 32px;
-    color: #0891B2;
+    color: #2563EB;
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
 }
 
 .page-title {
@@ -484,12 +485,12 @@ export default {
         transition: all 0.2s ease;
         
         &:hover {
-            border-color: #0891B2;
+            border-color: #2563EB;
         }
         
         &.is-focus {
-            border-color: #0891B2;
-            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
     }
 }
@@ -530,7 +531,7 @@ export default {
 
 .user-icon {
     font-size: 18px;
-    color: #0891B2;
+    color: #2563EB;
 }
 
 .username-text {
@@ -566,6 +567,26 @@ export default {
     display: flex;
     gap: 8px;
     justify-content: center;
+    
+    :deep(.el-button--primary) {
+        background: #2563EB;
+        border-color: #2563EB;
+        
+        &:hover {
+            background: #1D4ED8;
+            border-color: #1D4ED8;
+        }
+    }
+    
+    :deep(.el-button--danger) {
+        background: #F97316;
+        border-color: #F97316;
+        
+        &:hover {
+            background: #EA580C;
+            border-color: #EA580C;
+        }
+    }
 }
 
 :deep(.edit-dialog) {
@@ -679,11 +700,22 @@ export default {
     .table-wrapper {
         padding: 12px;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     :deep(.user-table) {
+        min-width: 600px;
+        
         .el-table__cell {
-            padding: 8px;
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+        
+        .el-table__header-wrapper {
+            th {
+                font-size: 13px;
+                padding: 10px 8px;
+            }
         }
     }
     
@@ -693,6 +725,28 @@ export default {
         
         .el-button {
             width: 100%;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+    }
+    
+    .user-cell {
+        gap: 6px;
+        
+        .user-icon {
+            font-size: 16px;
+        }
+        
+        .username-text {
+            font-size: 14px;
+        }
+    }
+    
+    .gender-cell {
+        gap: 4px;
+        
+        .gender-icon {
+            font-size: 16px;
         }
     }
 }

@@ -68,19 +68,42 @@
         </el-container>
 
         <div class="mobile-overlay" :class="{ 'show': isMobile && showMobileMenu }" @click="toggleMobileMenu"></div>
+
+        <!-- 退出登录确认弹窗 -->
+        <div v-if="showLogoutModal" class="logout-modal-overlay" @click="closeLogoutModal">
+            <div class="logout-modal" @click.stop>
+                <div class="logout-modal-header">
+                    <h3 class="logout-modal-title">确认退出</h3>
+                    <button class="logout-modal-close" @click="closeLogoutModal" aria-label="关闭">
+                        <el-icon><Close /></el-icon>
+                    </button>
+                </div>
+                <div class="logout-modal-body">
+                    <div class="logout-modal-icon">
+                        <el-icon><WarningFilled /></el-icon>
+                    </div>
+                    <p class="logout-modal-message">确定要退出登录吗？</p>
+                </div>
+                <div class="logout-modal-footer">
+                    <button class="logout-modal-btn cancel-btn" @click="closeLogoutModal">取消</button>
+                    <button class="logout-modal-btn confirm-btn" @click="confirmLogout">确定</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
-import {ElMessageBox} from "element-plus";
-import { Menu, Search, ChatDotRound, SwitchButton } from '@element-plus/icons-vue';
+import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled } from '@element-plus/icons-vue';
 
 export default {
     components: {
         Menu,
         Search,
         ChatDotRound,
-        SwitchButton
+        SwitchButton,
+        Close,
+        WarningFilled
     },
     name: "backend",
     data() {
@@ -88,7 +111,8 @@ export default {
             username: sessionStorage.getItem('user_name'),
             isMobile: false,
             showMobileMenu: false,
-            activeIndex: '1'
+            activeIndex: '1',
+            showLogoutModal: false
         };
     },
     mounted() {
@@ -119,20 +143,15 @@ export default {
             }
         },
         exitLogin(){
-            ElMessageBox.confirm("确定要退出登录吗？",{
-                title: "提示",
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
-                type: "warning"
-            })
-                .then(key=>{
-                    sessionStorage.setItem('user_name', '')
-                    sessionStorage.setItem('user_authenticated', 'false')
-                    this.$router.push("/")
-                })
-                .catch((action)=>{
-
-                })
+            this.showLogoutModal = true;
+        },
+        closeLogoutModal(){
+            this.showLogoutModal = false;
+        },
+        confirmLogout(){
+            sessionStorage.setItem('user_name', '');
+            sessionStorage.setItem('user_authenticated', 'false');
+            this.$router.push("/");
         },
     }
 };
@@ -416,12 +435,13 @@ export default {
             bottom: 0;
             width: 280px;
             max-width: 85vw;
-            transform: translateX(0);
+            transform: translateX(-100%);
             box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+            z-index: 999;
         }
 
-        .aside-container.mobile-hidden {
-            transform: translateX(-100%);
+        .aside-container:not(.mobile-hidden) {
+            transform: translateX(0);
         }
 
         .menu-item {
@@ -502,6 +522,177 @@ export default {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
+        }
+    }
+
+    :deep(.message-box-center) {
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin-top: 0 !important;
+    }
+
+    /* 退出登录确认弹窗样式 */
+    .logout-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(4px);
+    }
+
+    .logout-modal {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        width: 90%;
+        max-width: 400px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .logout-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .logout-modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1E293B;
+        margin: 0;
+    }
+
+    .logout-modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #64748B;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logout-modal-close:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #1E293B;
+    }
+
+    .logout-modal-body {
+        padding: 32px 24px;
+        text-align: center;
+    }
+
+    .logout-modal-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(249, 115, 22, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .logout-modal-icon .el-icon {
+        font-size: 32px;
+        color: #F97316;
+    }
+
+    .logout-modal-message {
+        font-size: 16px;
+        font-weight: 500;
+        color: #1E293B;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .logout-modal-footer {
+        display: flex;
+        gap: 12px;
+        padding: 0 24px 24px;
+    }
+
+    .logout-modal-btn {
+        flex: 1;
+        height: 48px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Noto Sans', sans-serif;
+    }
+
+    .logout-modal-btn.cancel-btn {
+        background: #F1F5F9;
+        color: #475569;
+        border: 1px solid #E2E8F0;
+    }
+
+    .logout-modal-btn.cancel-btn:hover {
+        background: #E2E8F0;
+    }
+
+    .logout-modal-btn.confirm-btn {
+        background: #2563EB;
+        color: white;
+    }
+
+    .logout-modal-btn.confirm-btn:hover {
+        background: #1D4ED8;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    @media (max-width: 480px) {
+        .logout-modal {
+            width: 95%;
+            max-width: 320px;
+        }
+
+        .logout-modal-header {
+            padding: 16px 20px;
+        }
+
+        .logout-modal-body {
+            padding: 24px 20px;
+        }
+
+        .logout-modal-footer {
+            padding: 0 20px 20px;
+        }
+
+        .logout-modal-btn {
+            height: 44px;
+            font-size: 15px;
+        }
+
+        .logout-modal-icon {
+            width: 56px;
+            height: 56px;
+        }
+
+        .logout-modal-icon .el-icon {
+            font-size: 28px;
+        }
+
+        .logout-modal-message {
+            font-size: 15px;
         }
     }
 </style>
