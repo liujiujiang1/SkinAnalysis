@@ -105,6 +105,19 @@ public class UserController {
 
     }
 
+    @GetMapping("/{username}")
+    private ResponseEntity<User> queryUserByUsername(@PathVariable("username") String username) {
+        try {
+            User user = userService.findUserByUsername(username);
+            if (user == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private boolean passwordMatches(String username, String rawPassword, String storedPassword) {
         if (rawPassword == null || storedPassword == null) {
             return false;

@@ -16,6 +16,14 @@
                                 <el-icon class="menu-icon"><ChatDotRound /></el-icon>
                                 <span class="menu-text">在线问答</span>
                             </el-menu-item>
+                            <el-menu-item index="2" class="menu-item">
+                                <el-icon class="menu-icon"><Clock /></el-icon>
+                                <span class="menu-text">诊断历史</span>
+                            </el-menu-item>
+                            <el-menu-item index="3" class="menu-item">
+                                <el-icon class="menu-icon"><UserFilled /></el-icon>
+                                <span class="menu-text">个人资料</span>
+                            </el-menu-item>
                         </el-menu>
                     </el-col>
                 </el-row>
@@ -94,7 +102,7 @@
 </template>
 
 <script lang="ts">
-import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled } from '@element-plus/icons-vue';
+import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled, Clock, UserFilled } from '@element-plus/icons-vue';
 
 export default {
     components: {
@@ -103,7 +111,9 @@ export default {
         ChatDotRound,
         SwitchButton,
         Close,
-        WarningFilled
+        WarningFilled,
+        Clock,
+        UserFilled
     },
     name: "backend",
     data() {
@@ -139,6 +149,10 @@ export default {
                 case "0":   this.$router.push("/user/QAChat");
                 break;
                 case "1":   this.$router.push("/user/analyse");
+                break;
+                case "2":   this.$router.push("/user/history");
+                break;
+                case "3":   this.$router.push("/user/profile");
                 break;
             }
         },

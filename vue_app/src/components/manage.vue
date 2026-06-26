@@ -24,11 +24,16 @@
 
         <div class="table-wrapper">
             <el-table 
-                :data="filterTableData" 
-                class="user-table"
+                :data="pagedTableData"
+                class="user-table desktop-table"
                 stripe
                 :header-cell-style="{ background: '#f8fafc', color: '#475569' }"
             >
+                <el-table-column label="序号" width="80" align="center">
+                    <template #default="{ $index }">
+                        {{ getRowIndex($index) }}
+                    </template>
+                </el-table-column>
                 <el-table-column label="账号" prop="username" min-width="150">
                     <template #default="{ row }">
                         <div class="user-cell">
@@ -92,6 +97,40 @@
                     </template>
                 </el-table-column>
             </el-table>
+
+            <div class="mobile-card-list">
+                <div class="mobile-user-card" v-for="(row, index) in pagedTableData" :key="row.username">
+                    <div class="mobile-card-top">
+                        <span class="mobile-index">#{{ getRowIndex(index) }}</span>
+                        <el-tag :type="getStateType(row.state)" effect="plain" size="small">{{ row.state }}</el-tag>
+                    </div>
+                    <div class="mobile-user-main">
+                        <el-icon class="user-icon"><User /></el-icon>
+                        <span class="mobile-username">{{ row.username }}</span>
+                    </div>
+                    <div class="mobile-fields">
+                        <div><span>密码</span><strong>{{ row.password || '-' }}</strong></div>
+                        <div><span>性别</span><strong>{{ row.gender || '-' }}</strong></div>
+                        <div><span>生日</span><strong>{{ row.birthday || '-' }}</strong></div>
+                        <div><span>居住地</span><strong>{{ row.district || '-' }}</strong></div>
+                    </div>
+                    <div class="mobile-actions">
+                        <el-button type="primary" size="small" :icon="Edit" @click="editUser(row)">编辑</el-button>
+                        <el-button type="danger" size="small" :icon="Delete" @click="deleteUser(index, row)">删除</el-button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pagination-wrap">
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="filterTableData.length"
+                    :layout="paginationLayout"
+                    background
+                />
+            </div>
         </div>
 
         <el-dialog 
@@ -221,6 +260,9 @@ export default {
         return {
             search: '',
             userData: [],
+            currentPage: 1,
+            pageSize: 10,
+            isMobile: false,
             showDialog: false,
             newForm: {
                 username: '',
@@ -283,11 +325,40 @@ export default {
                 return this.search === "" ? data : data.username.includes(this.search)
             })
         },
+        pagedTableData() {
+            const start = (this.currentPage - 1) * this.pageSize
+            return this.filterTableData.slice(start, start + this.pageSize)
+        },
+        paginationLayout() {
+            return this.isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'
+        },
+    },
+    watch: {
+        search() {
+            this.currentPage = 1
+        },
+        pageSize() {
+            this.currentPage = 1
+        },
+        filterTableData() {
+            const maxPage = Math.max(1, Math.ceil(this.filterTableData.length / this.pageSize))
+            if (this.currentPage > maxPage) {
+                this.currentPage = maxPage
+            }
+        }
     },
     mounted() {
+        this.updateMobileState();
+        window.addEventListener('resize', this.updateMobileState);
         this.query();
     },
+    beforeUnmount() {
+        window.removeEventListener('resize', this.updateMobileState);
+    },
     methods: {
+        updateMobileState() {
+            this.isMobile = window.innerWidth <= 768;
+        },
         getStateType(state) {
             const typeMap = {
                 '正常': 'success',
@@ -295,6 +366,9 @@ export default {
                 '注销': 'info'
             };
             return typeMap[state] || 'info';
+        },
+        getRowIndex(index) {
+            return (this.currentPage - 1) * this.pageSize + index + 1
         },
         disabledDate(time){
             let curDate = (new Date()).getTime();
@@ -367,7 +441,6 @@ export default {
             this.axios.put("/spring_api/user", data)
                 .then((response) => {
                     let res = response.data
-                    console.log(res)
                     if (res === "Success") {
                         ElMessageBox.alert("修改成功", {
                             title: "提示",
@@ -496,6 +569,97 @@ export default {
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.pagination-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+}
+
+.mobile-card-list {
+    display: none;
+}
+
+.mobile-user-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 10px;
+    background: #FFFFFF;
+}
+
+.mobile-card-top,
+.mobile-user-main,
+.mobile-actions {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-card-top {
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.mobile-index {
+    color: #64748B;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.mobile-user-main {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.mobile-username {
+    min-width: 0;
+    color: #0F172A;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+
+    div {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        background: transparent;
+    }
+
+    span {
+        flex: 0 0 auto;
+        color: #64748B;
+        font-size: 12px;
+    }
+
+    strong {
+        min-width: 0;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.mobile-actions {
+    gap: 8px;
+
+    .el-button {
+        flex: 1;
+        margin-left: 0;
+        height: 30px;
+    }
 }
 
 .user-table {
@@ -675,14 +839,28 @@ export default {
 }
 
 @media (max-width: 768px) {
+    .manage-container {
+        height: auto;
+        min-height: 100%;
+    }
+
     .page-header {
+        margin-bottom: 12px;
         padding: 16px;
+        border-radius: 8px;
+    }
+
+    .header-info {
+        width: 100%;
+        align-items: flex-start;
     }
     
     .header-icon {
-        width: 48px;
-        height: 48px;
-        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        font-size: 22px;
+        border-radius: 8px;
+        flex-shrink: 0;
     }
     
     .page-title {
@@ -692,19 +870,43 @@ export default {
     .page-subtitle {
         font-size: 13px;
     }
+
+    .search-input {
+        width: 100%;
+
+        :deep(.el-input__wrapper) {
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+    }
     
     .table-wrapper {
-        padding: 12px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        padding: 10px;
+        overflow: hidden;
+    }
+
+    .desktop-table {
+        display: none;
+    }
+
+    .mobile-card-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .pagination-wrap {
+        justify-content: center;
+        overflow-x: visible;
+        padding-bottom: 2px;
     }
     
     :deep(.user-table) {
-        min-width: 600px;
+        width: 100%;
         
         .el-table__cell {
-            padding: 12px 8px;
-            font-size: 14px;
+            padding: 10px 6px;
+            font-size: 13px;
         }
         
         .el-table__header-wrapper {
@@ -712,6 +914,10 @@ export default {
                 font-size: 13px;
                 padding: 10px 8px;
             }
+        }
+
+        .el-table__fixed-right {
+            box-shadow: -4px 0 10px rgba(15, 23, 42, 0.06);
         }
     }
     
@@ -745,6 +951,35 @@ export default {
             font-size: 16px;
         }
     }
+
+    :deep(.edit-dialog) {
+        width: calc(100vw - 24px) !important;
+        margin-top: 5vh !important;
+
+        .el-dialog__header {
+            padding: 16px 16px 12px;
+        }
+
+        .el-dialog__body {
+            padding: 16px;
+            max-height: 68vh;
+            overflow-y: auto;
+        }
+
+        .el-dialog__footer {
+            padding: 12px 16px 16px;
+        }
+    }
+
+    .dialog-footer {
+        flex-direction: column-reverse;
+        gap: 8px;
+
+        .el-button {
+            width: 100%;
+            margin-left: 0;
+        }
+    }
 }
 
 @media (max-width: 480px) {
@@ -759,9 +994,37 @@ export default {
     .page-title {
         font-size: 18px;
     }
+
+    .page-subtitle {
+        display: none;
+    }
     
     .table-wrapper {
         padding: 8px;
+    }
+
+    .mobile-fields {
+        grid-template-columns: 1fr 1fr;
+        gap: 5px 8px;
+    }
+
+    .mobile-user-card {
+        padding: 9px;
+    }
+
+    :deep(.user-table) {
+        .el-table__cell {
+            padding: 8px 4px;
+            font-size: 12px;
+        }
+    }
+
+    .password-text {
+        display: inline-block;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: bottom;
     }
 }
 </style>

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +62,11 @@ public class RecordController {
             Record record = new Record();
             record.setUser(userInfo);
             record.setDisease(recordRequest.getDisease());
+            record.setProbability(recordRequest.getProbability());
+            record.setTopResults(recordRequest.getTopResults());
+            record.setImageData(recordRequest.getImageData());
+            record.setAdviceBrief(recordRequest.getAdviceBrief());
+            record.setAdviceTreatment(recordRequest.getAdviceTreatment());
             record.setTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
 
             recordService.addRecord(record);
@@ -74,6 +80,50 @@ public class RecordController {
     private ResponseEntity<List<Record>> queryAllRecords(){
         try{
             return new ResponseEntity<>(recordService.getAllRecords(), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("user/{username}")
+    private ResponseEntity<List<Record>> queryRecordsByUsername(@PathVariable("username") String username){
+        try{
+            return new ResponseEntity<>(recordService.getRecordsByUsername(username), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("recent")
+    private ResponseEntity<List<Record>> queryRecentRecords(){
+        try{
+            return new ResponseEntity<>(recordService.getRecentRecords(), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("summary")
+    private ResponseEntity<Map<String, Long>> querySummary(){
+        try{
+            Map<String, Long> summary = new HashMap<>();
+            summary.put("userTotal", (long) userService.findAllUser().size());
+            summary.put("recordTotal", (long) recordService.getAllRecords().size());
+            summary.put("todayRecords", recordService.countTodayRecords());
+            summary.put("last7DaysRecords", recordService.countLast7DaysRecords());
+            return new ResponseEntity<>(summary, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("dimensions")
+    private ResponseEntity<Map<String, Map<String, Long>>> queryDimensions(){
+        try{
+            Map<String, Map<String, Long>> dimensions = new HashMap<>();
+            dimensions.put("gender", recordService.getRecordCountsByGender());
+            dimensions.put("district", recordService.getRecordCountsByDistrict());
+            return new ResponseEntity<>(dimensions, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

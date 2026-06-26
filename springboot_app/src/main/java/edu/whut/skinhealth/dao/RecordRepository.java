@@ -8,8 +8,26 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface RecordRepository extends JpaRepository<Record, Long>, JpaSpecificationExecutor<Record> {
+    List<Record> findAllByOrderByTimeDesc();
+
+    List<Record> findByUserUsernameOrderByTimeDesc(String username);
+
+    List<Record> findTop10ByOrderByTimeDesc();
+
     @Query(value = "SELECT r.disease, COUNT(r.disease) FROM record as r GROUP BY r.disease", nativeQuery = true)
     List<Object> findRecords();
+
+    @Query(value = "SELECT COUNT(*) FROM record WHERE DATE(time) = CURRENT_DATE()", nativeQuery = true)
+    Long countTodayRecords();
+
+    @Query(value = "SELECT COUNT(*) FROM record WHERE time >= DATE_SUB(NOW(), INTERVAL 7 DAY)", nativeQuery = true)
+    Long countLast7DaysRecords();
+
+    @Query(value = "SELECT u.gender, COUNT(*) FROM record r JOIN `user` u ON r.user_id = u.id GROUP BY u.gender", nativeQuery = true)
+    List<Object> countRecordsByGender();
+
+    @Query(value = "SELECT u.district, COUNT(*) FROM record r JOIN `user` u ON r.user_id = u.id GROUP BY u.district ORDER BY COUNT(*) DESC", nativeQuery = true)
+    List<Object> countRecordsByDistrict();
 
     @Query(value="SELECT\n" +
             "    CASE\n" +

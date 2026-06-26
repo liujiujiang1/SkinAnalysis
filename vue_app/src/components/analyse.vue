@@ -74,6 +74,24 @@
                 <div class="advice-content" v-if="adviceDisplay">
                     <div class="advice-card">
                         <div class="card-header">
+                            <el-icon class="header-icon"><TrendCharts /></el-icon>
+                            诊断详情
+                        </div>
+                        <div class="card-body">
+                            <div class="detail-row" v-for="item in results" :key="item.code">
+                                <div class="detail-title">
+                                    <span>{{ item.name }}</span>
+                                    <span>{{ item.probability }}%</span>
+                                </div>
+                                <el-progress :percentage="Number(item.probability)" :stroke-width="10" />
+                            </div>
+                            <div class="risk-note" :class="{ warning: Number(results[0].probability) < 60 }">
+                                {{ Number(results[0].probability) < 60 ? '模型置信度偏低，建议重新上传清晰图片或咨询医生。' : '模型置信度较高，可结合下方建议进一步判断。' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="advice-card">
+                        <div class="card-header">
                             <el-icon class="header-icon"><Document /></el-icon>
                             疾病简介
                         </div>
@@ -85,6 +103,9 @@
                             治疗方法
                         </div>
                         <div class="card-body treatment-content">{{ adviceDisplay.treatment }}</div>
+                    </div>
+                    <div class="disclaimer">
+                        本结果仅作为健康管理参考，不能替代医生面诊和病理检查。如出现快速增大、出血、疼痛或颜色异常，请及时就医。
                     </div>
                 </div>
                 <div class="advice-placeholder" v-else>
@@ -98,14 +119,15 @@
 
 <script lang="ts">
 import {ElMessageBox} from "element-plus";
-import { Picture, Upload, UploadFilled, Document, FirstAidKit } from '@element-plus/icons-vue';
+import { Picture, Upload, UploadFilled, Document, FirstAidKit, TrendCharts } from '@element-plus/icons-vue';
 export default {
     components: {
         Picture,
         Upload,
         UploadFilled,
         Document,
-        FirstAidKit
+        FirstAidKit,
+        TrendCharts
     },
     name: "analyse",
     data() {
@@ -115,11 +137,12 @@ export default {
                 name: '',
                 url: ''
             },
+            imageData: '',
             selectedIndex: 0,
             results: [
-                { name: '尚无结果', probability: 0 },
-                { name: '尚无结果', probability: 0 },
-                { name: '尚无结果', probability: 0 }
+                { code: 'NA', name: '尚无结果', probability: 0, adviceIndex: 0 },
+                { code: 'NA2', name: '尚无结果', probability: 0, adviceIndex: 0 },
+                { code: 'NA3', name: '尚无结果', probability: 0, adviceIndex: 0 }
             ],
             id_to_class : {0: 'MEL', 1: 'NV', 2: 'BCC', 3: 'AKIEC', 4: 'BKL', 5: 'DF', 6: 'VASC'},
             disease: {
@@ -175,10 +198,13 @@ export default {
     },
     methods: {
         handleChange(file){
-            let url = null
-            url = URL.createObjectURL(file.raw)
             this.fileList.url = URL.createObjectURL(file.raw)
             this.fileList.name = file.raw.name
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                this.imageData = event.target.result
+            }
+            reader.readAsDataURL(file.raw)
         },
         handleExceed(files){
             this.$refs['upload'].clearFiles()
@@ -188,33 +214,26 @@ export default {
             const descend = (a, b)=>{
                 return b['probability'] - a['probability'];
             }
-            console.log(response)
             let res = response.sort(descend)
 
             this.loading = true
             setTimeout(()=>{
                 this.loading = false;
-                this.results[0] = { 
-                    name: this.disease[this.id_to_class[res[0].id]], 
-                    probability: (res[0].probability * 100).toFixed(2) 
-                };
-                this.results[1] = { 
-                    name: this.disease[this.id_to_class[res[1].id]], 
-                    probability: (res[1].probability * 100).toFixed(2) 
-                };
-                this.results[2] = { 
-                    name: this.disease[this.id_to_class[res[2].id]], 
-                    probability: (res[2].probability * 100).toFixed(2) 
-                };
-                
-                this.adviceList[parseInt(res[0].id)] = this.adviceList[parseInt(res[0].id)] || this.adviceList[0];
-                this.adviceList[parseInt(res[1].id)] = this.adviceList[parseInt(res[1].id)] || this.adviceList[1];
-                this.adviceList[parseInt(res[2].id)] = this.adviceList[parseInt(res[2].id)] || this.adviceList[2];
+                const buildResult = (item) => {
+                    const code = this.id_to_class[item.id]
+                    return {
+                        code: code,
+                        name: this.disease[code],
+                        probability: (item.probability * 100).toFixed(2),
+                        adviceIndex: parseInt(item.id)
+                    }
+                }
+                this.results = [buildResult(res[0]), buildResult(res[1]), buildResult(res[2])];
                 
                 this.selectedIndex = 0;
                 this.selectResult(0);
                 
-                this.sendRecord(this.id_to_class[res[0].id])
+                this.sendRecord(this.results[0])
             }, 500)
         },
         handleError(){
@@ -229,16 +248,20 @@ export default {
         },
         selectResult(index){
             this.selectedIndex = index;
-            const adviceIndex = this.results[index].name === '尚无结果' ? 0 : 
-                Object.keys(this.disease).find(key => this.disease[key] === this.results[index].name);
-            this.adviceDisplay = this.adviceList[parseInt(adviceIndex)] || this.adviceList[0];
+            this.adviceDisplay = this.adviceList[this.results[index].adviceIndex] || this.adviceList[0];
         },
-        async sendRecord(disease){
+        async sendRecord(topResult){
+            const advice = this.adviceList[topResult.adviceIndex] || this.adviceList[0]
             this.axios.post(
                 '/spring_api/record',
             {
                 'username': sessionStorage.getItem('user_name'),
-                'disease': disease
+                'disease': topResult.code,
+                'probability': Number(topResult.probability),
+                'topResults': JSON.stringify(this.results),
+                'imageData': this.imageData,
+                'adviceBrief': advice.brief,
+                'adviceTreatment': advice.treatment
             },
             {
               headers: {
@@ -501,6 +524,44 @@ export default {
         white-space: pre-line;
     }
 
+    .detail-row {
+        margin-bottom: 14px;
+    }
+
+    .detail-title {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+
+    .risk-note {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #ECFDF5;
+        color: #047857;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .risk-note.warning {
+        background: #FFFBEB;
+        color: #B45309;
+    }
+
+    .disclaimer {
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        color: #64748B;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
     .advice-placeholder {
         text-align: center;
         padding: 48px 24px;
@@ -512,7 +573,7 @@ export default {
         font-size: 14px;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 960px) {
         .main-container {
             flex-direction: row;
             padding: 24px;
@@ -577,6 +638,41 @@ export default {
         }
     }
 
+    @media (max-width: 720px) {
+        .layout {
+            height: auto;
+            min-height: 100%;
+        }
+
+        .main-container {
+            height: auto;
+        }
+
+        .image-container {
+            min-height: 240px;
+            max-height: none;
+            aspect-ratio: 4 / 3;
+        }
+
+        .result-info,
+        .detail-title {
+            gap: 10px;
+        }
+
+        .disease-name {
+            overflow-wrap: anywhere;
+        }
+
+        .upload-demo :deep(.el-upload-list) {
+            width: 100%;
+        }
+
+        .select-btn,
+        .upload-btn {
+            max-width: none;
+        }
+    }
+
     @media (max-width: 480px) {
         .main-container {
             padding: 12px;
@@ -598,9 +694,20 @@ export default {
             font-size: 16px;
         }
 
+        .section-header {
+            padding: 8px 0;
+            margin-bottom: 12px;
+        }
+
         .result-item {
             padding: 10px;
             gap: 8px;
+        }
+
+        .result-info {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .result-rank {
@@ -636,6 +743,10 @@ export default {
         .card-body {
             padding: 12px;
             font-size: 13px;
+        }
+
+        .disclaimer {
+            font-size: 12px;
         }
     }
 

@@ -90,4 +90,18 @@ if (!$passwordArg) {
     & $mysql @commonArgs -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"
 }
 
+$recordColumns = @(
+    @{ Name = "probability"; Definition = "DOUBLE NULL" },
+    @{ Name = "top_results"; Definition = "LONGTEXT NULL" },
+    @{ Name = "image_data"; Definition = "LONGTEXT NULL" },
+    @{ Name = "advice_brief"; Definition = "TEXT NULL" },
+    @{ Name = "advice_treatment"; Definition = "TEXT NULL" }
+)
+foreach ($column in $recordColumns) {
+    $exists = (& $mysql @commonArgs --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'SkinAnalysis' AND table_name = 'record' AND column_name = '$($column.Name)';" 2>$null | Select-Object -First 1)
+    if ($exists -ne "1") {
+        & $mysql @commonArgs -e "ALTER TABLE SkinAnalysis.record ADD COLUMN $($column.Name) $($column.Definition);"
+    }
+}
+
 Write-Host "Local MySQL is ready at 127.0.0.1:3308, database SkinAnalysis, user root, password root."

@@ -10,7 +10,7 @@
                 </div>
                 
                 <el-menu 
-                    default-active="0" 
+                    :default-active="activeMenu"
                     @select="handleSelect"
                     class="side-menu"
                 >
@@ -25,6 +25,12 @@
                             <el-icon><DataAnalysis /></el-icon>
                         </template>
                         <span class="menu-text" v-show="!isCollapsed">数据统计</span>
+                    </el-menu-item>
+                    <el-menu-item index="2">
+                        <template #icon>
+                            <el-icon><Tickets /></el-icon>
+                        </template>
+                        <span class="menu-text" v-show="!isCollapsed">诊断记录</span>
                     </el-menu-item>
                 </el-menu>
             </el-aside>
@@ -100,13 +106,14 @@
 </template>
 
 <script lang="ts">
-import { User, DataAnalysis, SwitchButton, Fold, Close, WarningFilled } from '@element-plus/icons-vue';
+import { User, DataAnalysis, Tickets, SwitchButton, Fold, Close, WarningFilled } from '@element-plus/icons-vue';
 
 export default {
     name: "backend",
     components: {
         User,
         DataAnalysis,
+        Tickets,
         SwitchButton,
         Fold,
         Close,
@@ -121,6 +128,14 @@ export default {
             showMobileMenu: false,
             showLogoutModal: false
         };
+    },
+    computed: {
+        activeMenu() {
+            const path = this.$route.path;
+            if (path.includes('/statistics')) return '1';
+            if (path.includes('/records')) return '2';
+            return '0';
+        }
     },
     mounted() {
         this.checkMobile();
@@ -146,6 +161,8 @@ export default {
                 case "0":   this.$router.push("/admin/background/manage");
                 break;
                 case "1":   this.$router.push("/admin/background/statistics");
+                break;
+                case "2":   this.$router.push("/admin/background/records");
                 break;
             }
         },

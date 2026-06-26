@@ -24,7 +24,23 @@ public class RecordService {
     }
     public List<Record> getAllRecords()
     {
-        return recordRepository.findAll();
+        return recordRepository.findAllByOrderByTimeDesc();
+    }
+
+    public List<Record> getRecordsByUsername(String username) {
+        return recordRepository.findByUserUsernameOrderByTimeDesc(username);
+    }
+
+    public List<Record> getRecentRecords() {
+        return recordRepository.findTop10ByOrderByTimeDesc();
+    }
+
+    public Long countTodayRecords() {
+        return recordRepository.countTodayRecords();
+    }
+
+    public Long countLast7DaysRecords() {
+        return recordRepository.countLast7DaysRecords();
     }
 
     public List<DiseaseCount> getAllDiseaseCounts() {
@@ -35,7 +51,7 @@ public class RecordService {
             Object[] rowArray = (Object[]) o;
             DiseaseCount dc = new DiseaseCount();
             dc.setDisease((String) rowArray[0]);
-            dc.setCount((Long) rowArray[1]);
+            dc.setCount(toLong(rowArray[1]));
             list.add(dc);
         }
 
@@ -51,7 +67,7 @@ public class RecordService {
             DiseaseCountByMonth dcbm = new DiseaseCountByMonth();
             dcbm.setTime((String) rowArray[0]);
             dcbm.setDisease((String) rowArray[1]);
-            dcbm.setCount((Long) rowArray[2]);
+            dcbm.setCount(toLong(rowArray[2]));
             list.add(dcbm);
         }
 
@@ -68,6 +84,28 @@ public class RecordService {
             data.get(time).put(disease, count);
         }
         return data;
+    }
+
+    public Map<String, Long> getRecordCountsByGender() {
+        return toCountMap(recordRepository.countRecordsByGender());
+    }
+
+    public Map<String, Long> getRecordCountsByDistrict() {
+        return toCountMap(recordRepository.countRecordsByDistrict());
+    }
+
+    private Map<String, Long> toCountMap(List<Object> result) {
+        Map<String, Long> data = new HashMap<>();
+        for (Object o : result) {
+            Object[] rowArray = (Object[]) o;
+            String key = rowArray[0] == null ? "未知" : (String) rowArray[0];
+            data.put(key, toLong(rowArray[1]));
+        }
+        return data;
+    }
+
+    private Long toLong(Object value) {
+        return value == null ? 0L : ((Number) value).longValue();
     }
 
 

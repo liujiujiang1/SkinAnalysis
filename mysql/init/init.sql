@@ -656,6 +656,13 @@ INSERT INTO `user` VALUES (107, 'Nomura Momoka', '9TwvnnQYou', '正常', '2013-0
 INSERT INTO `user` VALUES (108, 'Jonathan Smith', 'z61swYrgdQ', '正常', '2017-10-11 01:28:24', '河北', '男', '2004-04-04');
 INSERT INTO `user` VALUES (109, 'Lok Tsz Hin', 'CNndhDObQT', '正常', '2017-04-26 01:05:38', '河北', '男', '2006-12-14');
 
+ALTER TABLE `record`
+  ADD COLUMN `probability` double NULL,
+  ADD COLUMN `top_results` longtext NULL,
+  ADD COLUMN `image_data` longtext NULL,
+  ADD COLUMN `advice_brief` text NULL,
+  ADD COLUMN `advice_treatment` text NULL;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
