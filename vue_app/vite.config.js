@@ -13,12 +13,14 @@ export default defineConfig({
         port: 8088,
         proxy: {
             '/flask_api': {
-                target: 'http://47.93.144.128:8080',
-                changeOrigin: true
+                target: process.env.FLASK_API_URL || 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/flask_api/, '')
             },
             '/spring_api': {
-                target: 'http://47.93.144.128:8080',
-                changeOrigin: true
+                target: process.env.SPRING_API_URL || 'http://127.0.0.1:8888',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/spring_api/, '')
             }
         }
     },

@@ -34,3 +34,10 @@ build/
 
 ### MySQL Data ###
 mysql/data/
+
+### Local run logs ###
+.local-run/
+
+### Python ###
+__pycache__/
+*.pyc
