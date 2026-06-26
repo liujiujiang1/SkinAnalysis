@@ -37,7 +37,7 @@ CREATE TABLE `admin`  (
 -- ----------------------------
 -- Records of admin
 -- ----------------------------
-INSERT INTO `admin` VALUES (1, 'admin', 'b9d11b3be25f5a1a7dc8ca04cd310b28', '12345678900');
+INSERT INTO `admin` VALUES (1, 'admin', '123456', '12345678900');
 
 -- ----------------------------
 -- Table structure for record

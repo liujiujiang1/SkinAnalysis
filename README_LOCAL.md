@@ -34,7 +34,7 @@
 .\scripts\start-local-mysql.ps1
 ```
 
-数据库数据保存在项目目录下的 `.local-run/mysql-data`。
+数据库数据保存在项目目录下的 `.local-run/mysql-data`。脚本只会在第一次没有表时导入 `mysql/init/init.sql`，后续注册和修改的数据会继续保留。
 
 注意：`.local-run/` 已被 `.gitignore` 忽略，不会随代码上传。如果换电脑或重新 clone 项目，脚本会重新用 `mysql/init/init.sql` 初始化一份数据库，你本机后来注册的新账号不会自动带过去。
 

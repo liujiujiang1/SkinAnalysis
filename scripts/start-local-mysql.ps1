@@ -81,7 +81,10 @@ if ($passwordArg) {
     $commonArgs += $passwordArg
 }
 
-Get-Content -Raw -Encoding UTF8 $initSql | & $mysql @commonArgs --force
+$tableCount = (& $mysql @commonArgs --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'SkinAnalysis' AND table_name = 'user';" 2>$null | Select-Object -First 1)
+if ($tableCount -ne "1") {
+    Get-Content -Raw -Encoding UTF8 $initSql | & $mysql @commonArgs --force
+}
 
 if (!$passwordArg) {
     & $mysql @commonArgs -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"

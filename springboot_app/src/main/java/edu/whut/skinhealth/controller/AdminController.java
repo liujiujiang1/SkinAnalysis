@@ -22,10 +22,9 @@ public class AdminController {
             if (admin != null) {
                 return new ResponseEntity<>("Exist", HttpStatus.OK);
             } else {
-                Md5Hash md5hash = new Md5Hash(password + username);
                 Admin newAdmin = new Admin();
                 newAdmin.setUsername(username);
-                newAdmin.setPassword(md5hash.toHex());
+                newAdmin.setPassword(password);
                 adminService.addAdmin(newAdmin);
                 return new ResponseEntity<>("Success", HttpStatus.OK);
             }
@@ -40,8 +39,7 @@ public class AdminController {
         try{
             Admin admin1 = adminService.findAdminByUsername(admin.getUsername());
             if (admin1 != null) {
-                Md5Hash md5hash = new Md5Hash(admin.getPassword() + admin.getUsername());
-                if (md5hash.toHex().equals(admin1.getPassword())) {
+                if (passwordMatches(admin.getUsername(), admin.getPassword(), admin1.getPassword())) {
                     return new ResponseEntity<>("Success", HttpStatus.OK);
                 } else {
                     return new ResponseEntity<>("InfoError", HttpStatus.OK);
@@ -53,5 +51,15 @@ public class AdminController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    private boolean passwordMatches(String username, String rawPassword, String storedPassword) {
+        if (rawPassword == null || storedPassword == null) {
+            return false;
+        }
+        if (rawPassword.equals(storedPassword)) {
+            return true;
+        }
+        return new Md5Hash(rawPassword + username).toHex().equals(storedPassword);
     }
 }

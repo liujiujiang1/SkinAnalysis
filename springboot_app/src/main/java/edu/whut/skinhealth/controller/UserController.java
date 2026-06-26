@@ -36,9 +36,6 @@ public class UserController {
     private ResponseEntity<String> addUser(@RequestBody User newUser){
         try {
             if (userService.findUserByUsername(newUser.getUsername())==null) {
-                Md5Hash md5hash = new Md5Hash(newUser.getPassword() + newUser.getUsername());
-
-                newUser.setPassword(md5hash.toHex());
                 newUser.setState("正常");
                 newUser.setSignupTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
                 userService.saveUser(newUser);
@@ -57,8 +54,7 @@ public class UserController {
         try{
             User user1 = userService.findUserByUsername(user.getUsername());    //查找用户
             if (user1 != null) {    //存在
-                Md5Hash md5hash = new Md5Hash(user.getPassword() + user.getUsername());
-                if (md5hash.toHex().equals(user1.getPassword())) {  //密码正确
+                if (passwordMatches(user.getUsername(), user.getPassword(), user1.getPassword())) {  //密码正确
                     return new ResponseEntity<>("Success", HttpStatus.OK);
                 } else {    //用户名与密码匹配错误
                     return new ResponseEntity<>("InfoError", HttpStatus.OK);
@@ -95,9 +91,11 @@ public class UserController {
             if (oldInfo == null){
                 return new ResponseEntity<>("NotExist", HttpStatus.OK);
             } else{
-                Md5Hash md5hash = new Md5Hash(user.getPassword() + user.getUsername());
-                oldInfo.setPassword(md5hash.toHex());
+                oldInfo.setPassword(user.getPassword());
                 oldInfo.setState(user.getState());
+                oldInfo.setGender(user.getGender());
+                oldInfo.setBirthday(user.getBirthday());
+                oldInfo.setDistrict(user.getDistrict());
                 userService.updateUserInfo(oldInfo);
                 return new ResponseEntity<>("Success", HttpStatus.OK);
             }
@@ -107,5 +105,14 @@ public class UserController {
 
     }
 
+    private boolean passwordMatches(String username, String rawPassword, String storedPassword) {
+        if (rawPassword == null || storedPassword == null) {
+            return false;
+        }
+        if (rawPassword.equals(storedPassword)) {
+            return true;
+        }
+        return new Md5Hash(rawPassword + username).toHex().equals(storedPassword);
+    }
 
 }

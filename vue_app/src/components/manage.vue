@@ -38,12 +38,12 @@
                     </template>
                 </el-table-column>
                 
-                <!-- <el-table-column label="密码" prop="password" min-width="200">
+                <el-table-column label="密码" prop="password" min-width="180">
                     <template #default="{ row }">
-                        <span class="password-text">{{ row.password.substring(0, 16) }}...</span>
+                        <span class="password-text">{{ row.password }}</span>
                     </template>
                 </el-table-column>
-                 -->
+
                 <el-table-column label="状态" prop="state" min-width="120">
                     <template #default="{ row }">
                         <el-tag 
@@ -119,9 +119,8 @@
                     <el-input 
                         class="dialog_input" 
                         v-model="newForm.password"
-                        type="password"
-                        placeholder="请输入新密码"
-                        show-password
+                        type="text"
+                        placeholder="请输入密码"
                     >
                         <template #prefix>
                             <el-icon><Lock /></el-icon>
@@ -133,8 +132,7 @@
                     <el-select 
                         v-model="newForm.gender"
                         class="dialog_select"
-                        disabled
-                        placeholder="性别不可修改"
+                        placeholder="选择性别"
                     >
                         <el-option
                             v-for="item in sexOptions"
@@ -165,7 +163,6 @@
                         v-model="newForm.birthday"
                         type="date"
                         placeholder="出生日期"
-                        disabled
                         format="YYYY/MM/DD"
                         value-format="YYYY-MM-DD"
                         class="dialog_datepicker"
@@ -176,8 +173,7 @@
                     <el-input 
                         class="dialog_input" 
                         v-model="newForm.district" 
-                        disabled
-                        placeholder="居住地不可修改"
+                        placeholder="请输入居住地"
                     >
                         <template #prefix>
                             <el-icon><Location /></el-icon>
