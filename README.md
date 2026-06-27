@@ -1,64 +1,185 @@
-# 皮肤智诊-SkinAnalysis 
+# 皮肤智诊 SkinAnalysis
 
-皮肤智诊（SkinAnalysis）是一款基于深度学习技术的皮肤病诊断系统，并采用了前后端分离技术对模型进行服务封装。
+皮肤智诊（SkinAnalysis）是一套基于深度学习的皮肤病辅助分析系统。当前分支采用本地分离启动方式，不再依赖 Docker 一键编排，前端、模型服务、业务后端和数据库分别运行，便于开发、调试和演示。
 
-前端采用Vue.js作为开发框架，
-后端采用双后端混合模式，
-即以Flask作为诊断模型的服务节点，提供访问诊断模型的API，
-以SpringBoot作为后台数据管理节点，提供数据持久化的API。
-同时，为了方便部署，我们将Vue.js(Nginx)、诊断模型(Flask)、SpringBoot、MySQL都部署在Docker容器中，以实现一键启动。
+模型训练数据集来源：ISIC2019。受数据集范围限制，当前仅支持部分皮肤疾病的辅助识别，结果仅供健康管理参考，不能替代医生面诊、皮肤镜检查或病理诊断。
 
-皮肤病模型训练数据集来源：ISIC2019
+## 功能概览
 
-（PS: 由于数据集问题，目前仅支持诊断少量类型的疾病）
+- 用户端图像诊断：上传皮肤图片，查看 Top 3 识别结果、概率、疾病简介和建议。
+- 诊断报告：诊断历史支持详情查看、筛选和报告下载。
+- 在线问答：结合最近一次诊断结果和疾病知识，提供皮肤健康问答。
+- 疾病百科：展示模型覆盖的疾病知识，管理端可维护内容。
+- 个人资料：支持用户信息维护、密码修改和安全问题。
+- 管理后台：用户管理、诊断记录、数据统计、反馈审核、模型表现看板。
+- 反馈闭环：用户可反馈识别结果是否准确，管理端可审核并统计模型表现。
 
+## 技术架构
 
-# 1. 预备工作
-## 1.1 安装软件
+- 前端：Vue 3 + Vite + Element Plus + ECharts
+- 模型服务：Flask + ONNX
+- 数据服务：Spring Boot + Spring Data JPA
+- 数据库：MySQL 8
 
-本项目依赖Docker Desktop实现一键启动，所以需要下载并安装Docker Desktop(Windows & MacOS)
+服务端口：
 
-对于Linux系统，请按照官方文档安装docker与docker-compose等组件。
+| 服务 | 地址 |
+| --- | --- |
+| Vue 前端 | `http://localhost:8088` |
+| Flask 模型服务 | `http://localhost:5001` |
+| Spring Boot 数据服务 | `http://localhost:8888` |
+| MySQL | `localhost:3308` |
 
-请保证docker和docker-compose版本能够匹配，且支持version 3以上的compose配置文件。
+前端开发代理：
 
-## 1.2 设置Gemini API-Key
-打开docker/vue_app文件夹中的api_key.js文件，
-在引号中输入个人申请的Gemini API-Key，
-否则无法使用在线问答功能。
+- `/spring_api/*` -> `http://127.0.0.1:8888/*`
+- `/flask_api/*` -> `http://127.0.0.1:5001/*`
 
-## 1.3 注意事项
-端口占用：8080(前端), 5000(Flask), 8888(SpringBoot), 3306(数据库)
+## 目录说明
 
-容器名称占用：vue-service, flask-service, springboot-service, mysql-service
+```text
+SkinAnalysis
+├── vue_app/          # Vue 前端
+├── springboot_app/   # Spring Boot 数据服务
+├── onnx_app/         # Flask 模型服务
+├── mysql/init/       # 数据库初始化脚本
+├── scripts/          # 本地启动/停止脚本
+├── assets/           # README 效果图
+└── 测试图片/          # 可用于测试上传的皮肤图片
+```
 
-在启动应用前注意检查以上端口是否被占用，以及与现有运行中的docker容器名称是否存在重复，
-如果被存在这些情况会导致软件系统无法正常运行。
+## 环境要求
 
-# 2. 开始
+- Node.js：建议 18.x
+- JDK：17 或更高版本
+- Python：建议 3.8 到 3.10
+- MySQL：建议 8.x
+- Maven：可直接使用项目自带的 `springboot_app/mvnw.cmd`
 
-## 2.1 启动应用
-启动Docker，打开命令行终端，进入到SkinAnalysis项目根目录下，输入`docker-compose up --build`指令
+## 本地启动
 
-## 2.2 进入应用
-打开浏览器
+建议打开 4 个 PowerShell 窗口，按顺序分别启动 MySQL、Spring Boot、Flask 和 Vue。
 
-（1）用户：输入http://localhost:8080 进入首页
+### 1. 启动项目专用 MySQL
 
-（2）管理员：输入http://localhost:8080/admin 进入后台管理页面，
-用户名为admin,密码为123456
+```powershell
+.\scripts\start-local-mysql.ps1
+```
 
-# 3. 效果展示
-用户登录页
-!["display0"]( assets/效果图0.png )
+默认配置：
 
-图像诊断栏，可上传图像获取诊断结果
-!["display1"]( assets/效果图1.png )
+- 数据库：`SkinAnalysis`
+- 地址：`127.0.0.1:3308`
+- 用户名：`root`
+- 密码：`root`
 
-ai诊断对话
-!["display2"]( assets/效果图2.png )
+数据库数据保存在 `.local-run/mysql-data`，该目录已被 `.gitignore` 忽略。首次启动时会导入 `mysql/init/init.sql`，后续本机数据会继续保留。
 
-后台用户统计
-!["display3"]( assets/效果图3.png )
+停止 MySQL：
 
-# SkinAnalysis
+```powershell
+.\scripts\stop-local-mysql.ps1
+```
+
+### 2. 启动 Spring Boot
+
+```powershell
+$env:JAVA_HOME="C:\Program Files\Java\jdk-22"
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+cd springboot_app
+.\mvnw.cmd spring-boot:run
+```
+
+如果你使用 JDK 17，把 `JAVA_HOME` 改成自己的 JDK 17 安装路径即可。
+
+### 3. 启动 Flask 模型服务
+
+```powershell
+cd onnx_app
+pip install -r requirements.txt
+$env:FLASK_PORT="5001"
+python app.py
+```
+
+如果希望使用虚拟环境：
+
+```powershell
+cd onnx_app
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:FLASK_PORT="5001"
+python app.py
+```
+
+### 4. 启动 Vue 前端
+
+```powershell
+cd vue_app
+npm install
+npm run dev
+```
+
+启动完成后访问：
+
+- 用户端：`http://localhost:8088`
+- 管理端：`http://localhost:8088/admin`
+
+管理员默认账号：
+
+- 用户名：`admin`
+- 密码：`123456`
+
+## AI 问答配置
+
+当前在线问答使用智谱 AI，配置文件为：
+
+```text
+vue_app/zhipu_api-key.js
+```
+
+如果问答不可用，优先检查 API Key 是否填写正确。
+
+## 常用验证命令
+
+前端构建：
+
+```powershell
+cd vue_app
+npm run build
+```
+
+后端测试：
+
+```powershell
+cd springboot_app
+$env:JAVA_HOME="C:\Program Files\Java\jdk-22"
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+.\mvnw.cmd test
+```
+
+## 效果展示
+
+用户登录页：
+
+![用户登录页](assets/效果图0.png)
+
+图像诊断：
+
+![图像诊断](assets/效果图1.png)
+
+AI 问答：
+
+![AI 问答](assets/效果图2.png)
+
+后台统计：
+
+![后台统计](assets/效果图3.png)
+
+## 更多本地说明
+
+更详细的本地启动和故障排查说明见：
+
+```text
+README_LOCAL.md
+```
