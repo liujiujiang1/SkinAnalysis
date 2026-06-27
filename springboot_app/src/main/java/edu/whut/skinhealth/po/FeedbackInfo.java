@@ -9,7 +9,10 @@ public class FeedbackInfo {
     private String predictedDisease;
     private Boolean accurate;
     private String realDisease;
+    private String reviewStatus;
+    private String reviewNote;
     private Timestamp feedbackTime;
+    private Timestamp reviewTime;
     private String comment;
     private Timestamp recordTime;
 
@@ -67,6 +70,30 @@ public class FeedbackInfo {
 
     public void setFeedbackTime(Timestamp feedbackTime) {
         this.feedbackTime = feedbackTime;
+    }
+
+    public String getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public void setReviewStatus(String reviewStatus) {
+        this.reviewStatus = reviewStatus;
+    }
+
+    public String getReviewNote() {
+        return reviewNote;
+    }
+
+    public void setReviewNote(String reviewNote) {
+        this.reviewNote = reviewNote;
+    }
+
+    public Timestamp getReviewTime() {
+        return reviewTime;
+    }
+
+    public void setReviewTime(Timestamp reviewTime) {
+        this.reviewTime = reviewTime;
     }
 
     public String getComment() {

@@ -5,7 +5,23 @@
             <el-button type="primary" @click="loadRecords">刷新</el-button>
         </div>
 
-        <el-empty v-if="records.length === 0" description="暂无诊断记录" />
+        <div class="filter-bar">
+            <el-input v-model="keyword" placeholder="搜索疾病或备注" clearable class="keyword-input" />
+            <el-select v-model="diseaseFilter" placeholder="疾病类型" clearable class="filter-input">
+                <el-option v-for="item in diseaseOptions" :key="item.code" :label="item.name" :value="item.code" />
+            </el-select>
+            <el-date-picker
+                v-model="dateRange"
+                type="daterange"
+                value-format="YYYY-MM-DD"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                class="date-filter"
+            />
+            <el-button @click="resetFilters">重置</el-button>
+        </div>
+
+        <el-empty v-if="filteredRecords.length === 0" description="暂无诊断记录" />
 
         <div v-else class="history-grid">
             <div class="history-card" v-for="(record, index) in pagedRecords" :key="record.id">
@@ -27,17 +43,20 @@
                             <el-progress :percentage="Number(item.probability)" :stroke-width="8" />
                         </div>
                     </div>
-                    <el-button type="primary" plain @click="openDetail(record)">查看详情</el-button>
+                    <div class="card-actions">
+                        <el-button type="primary" plain @click="openDetail(record)">查看详情</el-button>
+                        <el-button type="success" plain @click="downloadReport(record)">下载报告</el-button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div v-if="records.length > 0" class="pagination-wrap">
+        <div v-if="filteredRecords.length > 0" class="pagination-wrap">
             <el-pagination
                 v-model:current-page="currentPage"
                 v-model:page-size="pageSize"
                 :page-sizes="[6, 12, 24, 48]"
-                :total="records.length"
+                :total="filteredRecords.length"
                 layout="total, sizes, prev, pager, next, jumper"
                 background
             />
@@ -54,10 +73,18 @@
                         <p>{{ selectedRecord.adviceBrief || '暂无简介' }}</p>
                     </div>
                     <div class="detail-block">
+                        <h4>Top 3 结果</h4>
+                        <div v-for="item in parseTopResults(selectedRecord.topResults)" :key="item.code" class="detail-top-item">
+                            <span>{{ item.name }}</span>
+                            <el-progress :percentage="Number(item.probability)" :stroke-width="8" />
+                        </div>
+                    </div>
+                    <div class="detail-block">
                         <h4>治疗建议</h4>
                         <p>{{ selectedRecord.adviceTreatment || '暂无建议' }}</p>
                     </div>
                     <div class="disclaimer">诊断结果仅供参考，不能替代医生面诊。</div>
+                    <el-button class="detail-download" type="success" @click="downloadReport(selectedRecord)">下载报告</el-button>
                 </div>
             </div>
         </el-dialog>
@@ -65,47 +92,73 @@
 </template>
 
 <script>
+import { fetchDiseaseKnowledge, createDiseaseMap } from '../utils/diseaseKnowledgeService'
+import { downloadDiagnosisReport, formatProbability, formatTime, parseTopResults } from '../utils/report'
+
 export default {
     name: "history",
     data() {
         return {
             records: [],
+            keyword: '',
+            diseaseFilter: '',
+            dateRange: [],
             currentPage: 1,
             pageSize: 6,
             selectedRecord: null,
             detailVisible: false,
-            diseaseMap: {
-                MEL: '黑色素瘤',
-                NV: '黑素细胞痣',
-                BCC: '基底细胞癌',
-                AKIEC: '光化性角化病',
-                BKL: '良性角化病',
-                DF: '皮肤纤维瘤',
-                VASC: '血管病变'
-            }
+            diseaseOptions: [],
+            diseaseMap: {}
         }
     },
     computed: {
+        filteredRecords() {
+            const keyword = this.keyword.trim()
+            const start = this.dateRange?.[0] ? new Date(`${this.dateRange[0]} 00:00:00`).getTime() : null
+            const end = this.dateRange?.[1] ? new Date(`${this.dateRange[1]} 23:59:59`).getTime() : null
+            return this.records.filter((record) => {
+                const recordTime = record.time ? new Date(record.time).getTime() : 0
+                const text = `${this.diseaseName(record.disease)} ${record.adviceBrief || ''} ${record.adviceTreatment || ''}`
+                return (!keyword || text.includes(keyword))
+                    && (!this.diseaseFilter || record.disease === this.diseaseFilter)
+                    && (!start || recordTime >= start)
+                    && (!end || recordTime <= end)
+            })
+        },
         pagedRecords() {
             const start = (this.currentPage - 1) * this.pageSize
-            return this.records.slice(start, start + this.pageSize)
+            return this.filteredRecords.slice(start, start + this.pageSize)
         }
     },
     watch: {
+        keyword() {
+            this.currentPage = 1
+        },
+        diseaseFilter() {
+            this.currentPage = 1
+        },
+        dateRange() {
+            this.currentPage = 1
+        },
         pageSize() {
             this.currentPage = 1
         },
-        records() {
-            const maxPage = Math.max(1, Math.ceil(this.records.length / this.pageSize))
+        filteredRecords() {
+            const maxPage = Math.max(1, Math.ceil(this.filteredRecords.length / this.pageSize))
             if (this.currentPage > maxPage) {
                 this.currentPage = maxPage
             }
         }
     },
     mounted() {
+        this.loadKnowledge()
         this.loadRecords()
     },
     methods: {
+        async loadKnowledge() {
+            this.diseaseOptions = await fetchDiseaseKnowledge()
+            this.diseaseMap = createDiseaseMap(this.diseaseOptions)
+        },
         loadRecords() {
             const username = sessionStorage.getItem('user_name')
             this.axios.get(`/spring_api/record/user/${username}`)
@@ -118,25 +171,22 @@ export default {
             return (this.currentPage - 1) * this.pageSize + index + 1
         },
         diseaseName(code) {
-            return this.diseaseMap[code] || code || '未知'
+            return this.diseaseMap[code]?.name || code || '未知'
         },
-        formatProbability(value) {
-            return Number(value || 0).toFixed(2)
-        },
-        formatTime(value) {
-            return value ? new Date(value).toLocaleString() : '-'
-        },
-        parseTopResults(value) {
-            if (!value) return []
-            try {
-                return JSON.parse(value)
-            } catch (e) {
-                return []
-            }
-        },
+        formatProbability,
+        formatTime,
+        parseTopResults,
         openDetail(record) {
             this.selectedRecord = record
             this.detailVisible = true
+        },
+        resetFilters() {
+            this.keyword = ''
+            this.diseaseFilter = ''
+            this.dateRange = []
+        },
+        downloadReport(record) {
+            downloadDiagnosisReport(record, { diseaseName: this.diseaseName })
         }
     }
 }
@@ -163,6 +213,27 @@ export default {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 18px;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 14px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #FFFFFF;
+}
+
+.keyword-input,
+.filter-input {
+    width: 220px;
+}
+
+.date-filter {
+    width: 280px;
 }
 
 .history-card {
@@ -230,6 +301,16 @@ export default {
     color: #334155;
 }
 
+.card-actions {
+    display: flex;
+    gap: 8px;
+
+    .el-button {
+        flex: 1;
+        margin-left: 0;
+    }
+}
+
 .detail-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -261,6 +342,17 @@ export default {
     color: #475569;
 }
 
+.detail-top-item {
+    margin-bottom: 10px;
+    color: #334155;
+    font-size: 13px;
+}
+
+.detail-download {
+    width: 100%;
+    margin-top: 12px;
+}
+
 .disclaimer {
     margin-top: 14px;
     padding: 10px;
@@ -288,6 +380,17 @@ export default {
     .history-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .keyword-input,
+    .filter-input,
+    .date-filter {
+        width: 100%;
     }
 
     .record-image {

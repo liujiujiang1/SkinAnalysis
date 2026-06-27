@@ -135,6 +135,7 @@
 import {ElMessageBox} from "element-plus";
 import { Picture, Upload, UploadFilled, Document, FirstAidKit, TrendCharts } from '@element-plus/icons-vue';
 import { diseaseKnowledge } from '../data/diseaseKnowledge'
+import { createDiseaseMap, fetchDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
 export default {
     components: {
         Picture,
@@ -156,6 +157,7 @@ export default {
             selectedIndex: 0,
             latestRecordId: null,
             diseaseOptions: diseaseKnowledge,
+            knowledgeMap: createDiseaseMap(diseaseKnowledge),
             feedbackForm: {
                 accurate: true,
                 realDisease: '',
@@ -218,7 +220,15 @@ export default {
             ],
         };
     },
+    mounted() {
+        this.loadDiseaseKnowledge()
+    },
     methods: {
+        async loadDiseaseKnowledge() {
+            const knowledge = await fetchDiseaseKnowledge()
+            this.diseaseOptions = knowledge
+            this.knowledgeMap = createDiseaseMap(knowledge)
+        },
         handleChange(file){
             this.fileList.url = URL.createObjectURL(file.raw)
             this.fileList.name = file.raw.name
@@ -245,7 +255,7 @@ export default {
                     const code = this.id_to_class[item.id]
                     return {
                         code: code,
-                        name: this.disease[code],
+                        name: this.knowledgeMap[code]?.name || this.disease[code],
                         probability: (item.probability * 100).toFixed(2),
                         adviceIndex: parseInt(item.id)
                     }
@@ -270,10 +280,19 @@ export default {
         },
         selectResult(index){
             this.selectedIndex = index;
-            this.adviceDisplay = this.adviceList[this.results[index].adviceIndex] || this.adviceList[0];
+            const result = this.results[index]
+            const knowledge = this.knowledgeMap[result.code]
+            this.adviceDisplay = knowledge ? {
+                brief: knowledge.intro,
+                treatment: knowledge.advice.join('\n')
+            } : (this.adviceList[result.adviceIndex] || this.adviceList[0]);
         },
         async sendRecord(topResult){
-            const advice = this.adviceList[topResult.adviceIndex] || this.adviceList[0]
+            const knowledge = this.knowledgeMap[topResult.code]
+            const advice = knowledge ? {
+                brief: knowledge.intro,
+                treatment: knowledge.advice.join('\n')
+            } : (this.adviceList[topResult.adviceIndex] || this.adviceList[0])
             const response = await this.axios.post(
                 '/spring_api/record',
             {

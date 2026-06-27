@@ -1,8 +1,11 @@
 <template>
     <div class="wiki-page">
         <div class="page-header">
-            <h1>疾病百科</h1>
-            <p>覆盖模型识别的 7 类皮肤疾病，便于结合诊断结果查看风险和注意事项。</p>
+            <div>
+                <h1>疾病百科</h1>
+                <p>覆盖模型识别的 7 类皮肤疾病，便于结合诊断结果查看风险和注意事项。</p>
+            </div>
+            <el-button v-if="isAdmin" type="primary" @click="loadDiseases">刷新知识库</el-button>
         </div>
 
         <div class="wiki-grid">
@@ -31,26 +34,108 @@
                     <strong>注意事项</strong>
                     <span>{{ item.cautions.join('；') }}</span>
                 </div>
+                <el-button v-if="isAdmin" class="edit-btn" type="primary" plain @click="openEditor(item)">编辑知识</el-button>
             </section>
         </div>
+
+        <el-dialog v-model="editorVisible" title="编辑疾病知识" width="680px" class="wiki-editor">
+            <el-form v-if="editForm" label-position="top" class="editor-form">
+                <el-form-item label="疾病编码">
+                    <el-input v-model="editForm.code" disabled />
+                </el-form-item>
+                <el-form-item label="疾病名称">
+                    <el-input v-model="editForm.name" />
+                </el-form-item>
+                <el-form-item label="风险等级">
+                    <el-select v-model="editForm.risk" class="full-input">
+                        <el-option label="低" value="低" />
+                        <el-option label="低到中" value="低到中" />
+                        <el-option label="中" value="中" />
+                        <el-option label="中高" value="中高" />
+                        <el-option label="高" value="高" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="疾病简介">
+                    <el-input v-model="editForm.intro" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="常见症状（一行一条）">
+                    <el-input v-model="editForm.symptomsText" type="textarea" :rows="4" />
+                </el-form-item>
+                <el-form-item label="建议（一行一条）">
+                    <el-input v-model="editForm.adviceText" type="textarea" :rows="4" />
+                </el-form-item>
+                <el-form-item label="注意事项（一行一条）">
+                    <el-input v-model="editForm.cautionsText" type="textarea" :rows="3" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="editorVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveEditor">保存</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
 <script>
-import { diseaseKnowledge } from '../data/diseaseKnowledge'
+import { ElMessageBox } from 'element-plus'
+import { fetchDiseaseKnowledge, saveDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
 
 export default {
     name: 'diseaseWiki',
     data() {
         return {
-            diseases: diseaseKnowledge
+            diseases: [],
+            editorVisible: false,
+            editForm: null
         }
     },
+    computed: {
+        isAdmin() {
+            return this.$route.path.startsWith('/admin')
+        }
+    },
+    mounted() {
+        this.loadDiseases()
+    },
     methods: {
+        async loadDiseases() {
+            this.diseases = await fetchDiseaseKnowledge()
+        },
         riskTagType(risk) {
+            if (!risk) return 'info'
             if (risk.includes('高')) return 'danger'
             if (risk.includes('中')) return 'warning'
             return 'success'
+        },
+        openEditor(item) {
+            this.editForm = {
+                ...item,
+                symptomsText: item.symptoms.join('\n'),
+                adviceText: item.advice.join('\n'),
+                cautionsText: item.cautions.join('\n')
+            }
+            this.editorVisible = true
+        },
+        async saveEditor() {
+            const saved = await saveDiseaseKnowledge({
+                code: this.editForm.code,
+                name: this.editForm.name,
+                risk: this.editForm.risk,
+                intro: this.editForm.intro,
+                symptoms: this.editForm.symptomsText,
+                advice: this.editForm.adviceText,
+                cautions: this.editForm.cautionsText
+            })
+            const index = this.diseases.findIndex((item) => item.code === saved.code)
+            if (index >= 0) {
+                this.diseases.splice(index, 1, saved)
+            }
+            this.editorVisible = false
+            ElMessageBox.alert('知识库已更新。', {
+                title: '提示',
+                confirmButtonText: '确定',
+                type: 'success'
+            })
         }
     }
 }
@@ -62,6 +147,10 @@ export default {
 }
 
 .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 20px;
 
     h1 {
@@ -150,14 +239,30 @@ export default {
     }
 }
 
+.edit-btn {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.full-input {
+    width: 100%;
+}
+
 @media (max-width: 720px) {
     .page-header {
+        display: block;
+
         h1 {
             font-size: 22px;
         }
 
         p {
             font-size: 13px;
+        }
+
+        .el-button {
+            width: 100%;
+            margin-top: 10px;
         }
     }
 
@@ -168,6 +273,17 @@ export default {
 
     .wiki-card {
         padding: 14px;
+    }
+
+    :deep(.wiki-editor) {
+        width: calc(100vw - 24px) !important;
+        margin-top: 5vh !important;
+
+        .el-dialog__body {
+            max-height: 72vh;
+            overflow-y: auto;
+            padding: 16px;
+        }
     }
 }
 </style>

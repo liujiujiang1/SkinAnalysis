@@ -62,7 +62,10 @@
                 </el-table-column>
                 <el-table-column label="操作" width="110" fixed="right">
                     <template #default="{ row }">
-                        <el-button type="primary" plain size="small" @click="openRecord(row)">详情</el-button>
+                        <div class="table-actions">
+                            <el-button type="primary" plain size="small" @click="openRecord(row)">详情</el-button>
+                            <el-button type="success" plain size="small" @click="downloadReport(row)">报告</el-button>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
@@ -71,7 +74,10 @@
                 <div class="mobile-record-card" v-for="(row, index) in pagedRecords" :key="row.id || getRowIndex(index)">
                     <div class="mobile-card-top">
                         <span class="mobile-index">#{{ getRowIndex(index) }}</span>
-                        <el-button type="primary" plain size="small" @click="openRecord(row)">详情</el-button>
+                        <div>
+                            <el-button type="primary" plain size="small" @click="openRecord(row)">详情</el-button>
+                            <el-button type="success" plain size="small" @click="downloadReport(row)">报告</el-button>
+                        </div>
                     </div>
                     <div class="mobile-record-main">
                         <el-image v-if="row.imageData" class="mobile-thumb" :src="row.imageData" fit="cover" />
@@ -117,6 +123,7 @@
                     <p class="text-block">{{ selectedRecord.adviceBrief || '暂无简介' }}</p>
                     <h4>治疗建议</h4>
                     <p class="text-block">{{ selectedRecord.adviceTreatment || '暂无建议' }}</p>
+                    <el-button class="detail-download" type="success" @click="downloadReport(selectedRecord)">下载报告</el-button>
                 </div>
             </div>
         </el-dialog>
@@ -124,7 +131,9 @@
 </template>
 
 <script>
-import { diseaseKnowledge, diseaseName } from '../data/diseaseKnowledge'
+import { diseaseKnowledge } from '../data/diseaseKnowledge'
+import { createDiseaseMap, fetchDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
+import { downloadDiagnosisReport } from '../utils/report'
 
 export default {
     name: "records",
@@ -140,15 +149,7 @@ export default {
             isMobile: false,
             selectedRecord: null,
             detailVisible: false,
-            diseaseMap: {
-                MEL: '黑色素瘤',
-                NV: '黑素细胞痣',
-                BCC: '基底细胞癌',
-                AKIEC: '光化性角化病',
-                BKL: '良性角化病',
-                DF: '皮肤纤维瘤',
-                VASC: '血管病变'
-            }
+            diseaseMap: createDiseaseMap(diseaseKnowledge)
         }
     },
     computed: {
@@ -184,6 +185,7 @@ export default {
     mounted() {
         this.updateMobileState()
         window.addEventListener('resize', this.updateMobileState)
+        this.loadKnowledge()
         this.loadRecords()
     },
     beforeUnmount() {
@@ -197,6 +199,10 @@ export default {
             const res = await this.axios.get('/spring_api/record/search', { params: this.buildFilterParams() })
             this.records = res.data || []
             this.currentPage = 1
+        },
+        async loadKnowledge() {
+            this.diseaseOptions = await fetchDiseaseKnowledge()
+            this.diseaseMap = createDiseaseMap(this.diseaseOptions)
         },
         buildFilterParams() {
             const params = {}
@@ -224,7 +230,7 @@ export default {
             return (this.currentPage - 1) * this.pageSize + index + 1
         },
         diseaseName(code) {
-            return diseaseName(code)
+            return this.diseaseMap[code]?.name || code || '未知'
         },
         formatProbability(value) {
             return Number(value || 0).toFixed(2)
@@ -243,6 +249,9 @@ export default {
         openRecord(record) {
             this.selectedRecord = record
             this.detailVisible = true
+        },
+        downloadReport(record) {
+            downloadDiagnosisReport(record, { diseaseName: this.diseaseName })
         }
     }
 }
@@ -317,6 +326,15 @@ export default {
     height: 54px;
     border-radius: 6px;
     background: #F8FAFC;
+}
+
+.table-actions {
+    display: grid;
+    gap: 6px;
+
+    .el-button {
+        margin-left: 0;
+    }
 }
 
 .empty-text {
@@ -473,6 +491,11 @@ export default {
     white-space: pre-line;
     color: #475569;
     line-height: 1.6;
+}
+
+.detail-download {
+    width: 100%;
+    margin-top: 12px;
 }
 
 @media (max-width: 720px) {

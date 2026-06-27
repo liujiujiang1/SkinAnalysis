@@ -32,4 +32,8 @@ public class FeedbackService {
     public Optional<Feedback> getLatestFeedback(Long recordId, String username) {
         return feedbackRepository.findTopByRecordIdAndUsernameOrderByFeedbackTimeDesc(recordId, username);
     }
+
+    public Optional<Feedback> getById(Long id) {
+        return feedbackRepository.findById(id);
+    }
 }
