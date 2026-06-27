@@ -21,10 +21,14 @@
                                 <span class="menu-text">诊断历史</span>
                             </el-menu-item>
                             <el-menu-item index="3" class="menu-item">
+                                <el-icon class="menu-icon"><Calendar /></el-icon>
+                                <span class="menu-text">病灶随访</span>
+                            </el-menu-item>
+                            <el-menu-item index="4" class="menu-item">
                                 <el-icon class="menu-icon"><UserFilled /></el-icon>
                                 <span class="menu-text">个人资料</span>
                             </el-menu-item>
-                            <el-menu-item index="4" class="menu-item">
+                            <el-menu-item index="5" class="menu-item">
                                 <el-icon class="menu-icon"><Reading /></el-icon>
                                 <span class="menu-text">疾病百科</span>
                             </el-menu-item>
@@ -106,7 +110,7 @@
 </template>
 
 <script lang="ts">
-import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled, Clock, UserFilled, Reading } from '@element-plus/icons-vue';
+import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled, Clock, UserFilled, Reading, Calendar } from '@element-plus/icons-vue';
 
 export default {
     components: {
@@ -118,7 +122,8 @@ export default {
         WarningFilled,
         Clock,
         UserFilled,
-        Reading
+        Reading,
+        Calendar
     },
     name: "backend",
     data() {
@@ -157,9 +162,11 @@ export default {
                 break;
                 case "2":   this.$router.push("/user/history");
                 break;
-                case "3":   this.$router.push("/user/profile");
+                case "3":   this.$router.push("/user/followup");
                 break;
-                case "4":   this.$router.push("/user/wiki");
+                case "4":   this.$router.push("/user/profile");
+                break;
+                case "5":   this.$router.push("/user/wiki");
                 break;
             }
         },

@@ -18,6 +18,9 @@ public class RecordRequest {
     private String imageData;
     private String adviceBrief;
     private String adviceTreatment;
+    private String riskLevel;
+    private String riskAdvice;
+    private Long lesionProfileId;
 
 
     public String getDisease() {
@@ -46,6 +49,18 @@ public class RecordRequest {
 
     public String getAdviceTreatment() {
         return adviceTreatment;
+    }
+
+    public String getRiskLevel() {
+        return riskLevel;
+    }
+
+    public String getRiskAdvice() {
+        return riskAdvice;
+    }
+
+    public Long getLesionProfileId() {
+        return lesionProfileId;
     }
 
     public String getUsername() {
@@ -82,5 +97,17 @@ public class RecordRequest {
 
     public void setAdviceTreatment(String adviceTreatment) {
         this.adviceTreatment = adviceTreatment;
+    }
+
+    public void setRiskLevel(String riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public void setRiskAdvice(String riskAdvice) {
+        this.riskAdvice = riskAdvice;
+    }
+
+    public void setLesionProfileId(Long lesionProfileId) {
+        this.lesionProfileId = lesionProfileId;
     }
 }

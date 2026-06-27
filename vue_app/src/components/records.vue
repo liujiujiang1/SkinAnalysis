@@ -51,6 +51,11 @@
                 <el-table-column label="概率" min-width="100">
                     <template #default="{ row }">{{ formatProbability(row.probability) }}%</template>
                 </el-table-column>
+                <el-table-column label="风险" min-width="110">
+                    <template #default="{ row }">
+                        <el-tag :type="riskTagType(row.riskLevel)">{{ row.riskLevel || '未分级' }}</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column label="时间" min-width="180">
                     <template #default="{ row }">{{ formatTime(row.time) }}</template>
                 </el-table-column>
@@ -85,6 +90,7 @@
                         <div class="mobile-record-title">
                             <strong>{{ diseaseName(row.disease) }}</strong>
                             <span>{{ formatProbability(row.probability) }}%</span>
+                            <el-tag :type="riskTagType(row.riskLevel)" size="small">{{ row.riskLevel || '未分级' }}</el-tag>
                         </div>
                     </div>
                     <div class="mobile-fields">
@@ -115,6 +121,10 @@
                 <div class="detail-content">
                     <h3>{{ diseaseName(selectedRecord.disease) }}</h3>
                     <p>{{ selectedRecord.user?.username || '-' }} · {{ formatTime(selectedRecord.time) }}</p>
+                    <div class="risk-advice">
+                        <el-tag :type="riskTagType(selectedRecord.riskLevel)">{{ selectedRecord.riskLevel || '未分级' }}</el-tag>
+                        <span>{{ selectedRecord.riskAdvice || '暂无就医提醒' }}</span>
+                    </div>
                     <div v-for="item in parseTopResults(selectedRecord.topResults)" :key="item.code" class="top-result">
                         <div>{{ item.name }} <span>{{ item.probability }}%</span></div>
                         <el-progress :percentage="Number(item.probability)" :stroke-width="8" />
@@ -134,6 +144,7 @@
 import { diseaseKnowledge } from '../data/diseaseKnowledge'
 import { createDiseaseMap, fetchDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
 import { downloadDiagnosisReport } from '../utils/report'
+import { riskTagType } from '../utils/risk'
 
 export default {
     name: "records",
@@ -195,6 +206,7 @@ export default {
         updateMobileState() {
             this.isMobile = window.innerWidth <= 720
         },
+        riskTagType,
         async loadRecords() {
             const res = await this.axios.get('/spring_api/record/search', { params: this.buildFilterParams() })
             this.records = res.data || []
@@ -420,6 +432,10 @@ export default {
         font-weight: 700;
         font-size: 14px;
     }
+
+    .el-tag {
+        margin-top: 6px;
+    }
 }
 
 .mobile-fields {
@@ -489,6 +505,17 @@ export default {
 
 .text-block {
     white-space: pre-line;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.risk-advice {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px;
+    border-radius: 8px;
+    background: #F8FAFC;
     color: #475569;
     line-height: 1.6;
 }

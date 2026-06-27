@@ -4,6 +4,8 @@ import edu.whut.skinhealth.dao.DiseaseKnowledgeRepository;
 import edu.whut.skinhealth.entity.DiseaseKnowledge;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +27,19 @@ public class DiseaseKnowledgeService {
 
     public DiseaseKnowledge save(DiseaseKnowledge diseaseKnowledge) {
         diseaseKnowledge.setCode(diseaseKnowledge.getCode().trim().toUpperCase());
+        if (diseaseKnowledge.getSource() == null || diseaseKnowledge.getSource().isBlank()) {
+            diseaseKnowledge.setSource("ISIC2019 数据集与皮肤科通用健康管理建议");
+        }
+        if (diseaseKnowledge.getVersion() == null || diseaseKnowledge.getVersion().isBlank()) {
+            diseaseKnowledge.setVersion("v1.0");
+        }
+        if (diseaseKnowledge.getEditor() == null || diseaseKnowledge.getEditor().isBlank()) {
+            diseaseKnowledge.setEditor("admin");
+        }
+        if (diseaseKnowledge.getReviewStatus() == null || diseaseKnowledge.getReviewStatus().isBlank()) {
+            diseaseKnowledge.setReviewStatus("待审核");
+        }
+        diseaseKnowledge.setUpdatedTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
         return diseaseKnowledgeRepository.save(diseaseKnowledge);
     }
 
@@ -80,6 +95,11 @@ public class DiseaseKnowledgeService {
         item.setSymptoms(symptoms);
         item.setAdvice(advice);
         item.setCautions(cautions);
+        item.setSource("ISIC2019 数据集与皮肤科通用健康管理建议");
+        item.setVersion("v1.0");
+        item.setEditor("system");
+        item.setReviewStatus("已审核");
+        item.setUpdatedTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
         return item;
     }
 }

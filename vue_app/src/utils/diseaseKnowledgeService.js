@@ -23,7 +23,12 @@ export function normalizeKnowledge(item) {
     intro: item.intro || '',
     symptoms: splitLines(item.symptoms),
     advice: splitLines(item.advice),
-    cautions: splitLines(item.cautions)
+    cautions: splitLines(item.cautions),
+    source: item.source || 'ISIC2019 数据集与皮肤科通用健康管理建议',
+    version: item.version || 'v1.0',
+    editor: item.editor || 'admin',
+    reviewStatus: item.reviewStatus || '待审核',
+    updatedTime: item.updatedTime || ''
   }
 }
 
@@ -35,7 +40,12 @@ export function serializeKnowledge(item) {
     intro: item.intro,
     symptoms: joinLines(item.symptoms),
     advice: joinLines(item.advice),
-    cautions: joinLines(item.cautions)
+    cautions: joinLines(item.cautions),
+    source: item.source,
+    version: item.version,
+    editor: item.editor,
+    reviewStatus: item.reviewStatus,
+    updatedTime: item.updatedTime
   }
 }
 

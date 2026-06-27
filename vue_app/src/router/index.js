@@ -14,12 +14,14 @@ import analyse from "../components/analyse.vue"
 import history from "../components/history.vue"
 import profile from "../components/profile.vue"
 import diseaseWiki from "../components/diseaseWiki.vue"
+import followup from "../components/followup.vue"
 
 
 import manage from "../components/manage.vue"
 import statistics from "../components/statistics.vue"
 import records from "../components/records.vue"
 import feedback from "../components/feedback.vue"
+import reviewWorkbench from "../components/reviewWorkbench.vue"
 
 import page404 from "../components/page404.vue"
 
@@ -47,6 +49,10 @@ const routes = [
             {
                 path: "/user/history",
                 component: history
+            },
+            {
+                path: "/user/followup",
+                component: followup
             },
             {
                 path: "/user/profile",
@@ -105,6 +111,10 @@ const routes = [
             {
                 path: "/admin/background/feedback",
                 component: feedback
+            },
+            {
+                path: "/admin/background/review",
+                component: reviewWorkbench
             }
         ],
         beforeEnter: (from, to, next)=>{

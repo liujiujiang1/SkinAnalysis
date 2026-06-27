@@ -36,6 +36,10 @@
                         <span>{{ diseaseName(record.disease) }}</span>
                         <el-tag type="success">{{ formatProbability(record.probability) }}%</el-tag>
                     </div>
+                    <div class="risk-line">
+                        <el-tag :type="riskTagType(record.riskLevel)" size="small">{{ record.riskLevel || '未分级' }}</el-tag>
+                        <span>{{ record.riskAdvice || '暂无就医提醒' }}</span>
+                    </div>
                     <div class="record-meta">{{ formatTime(record.time) }}</div>
                     <div class="top-list">
                         <div v-for="item in parseTopResults(record.topResults)" :key="item.code" class="top-item">
@@ -68,6 +72,10 @@
                 <div class="detail-content">
                     <h3>{{ diseaseName(selectedRecord.disease) }}</h3>
                     <p class="detail-time">{{ formatTime(selectedRecord.time) }}</p>
+                    <div class="detail-risk">
+                        <el-tag :type="riskTagType(selectedRecord.riskLevel)">{{ selectedRecord.riskLevel || '未分级' }}</el-tag>
+                        <span>{{ selectedRecord.riskAdvice || '暂无就医提醒' }}</span>
+                    </div>
                     <div class="detail-block">
                         <h4>疾病简介</h4>
                         <p>{{ selectedRecord.adviceBrief || '暂无简介' }}</p>
@@ -94,6 +102,7 @@
 <script>
 import { fetchDiseaseKnowledge, createDiseaseMap } from '../utils/diseaseKnowledgeService'
 import { downloadDiagnosisReport, formatProbability, formatTime, parseTopResults } from '../utils/report'
+import { riskTagType } from '../utils/risk'
 
 export default {
     name: "history",
@@ -176,6 +185,7 @@ export default {
         formatProbability,
         formatTime,
         parseTopResults,
+        riskTagType,
         openDetail(record) {
             this.selectedRecord = record
             this.detailVisible = true
@@ -295,6 +305,20 @@ export default {
     font-size: 13px;
 }
 
+.risk-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+    color: #64748B;
+    font-size: 12px;
+    line-height: 1.5;
+
+    span:last-child {
+        flex: 1;
+    }
+}
+
 .top-item {
     margin-bottom: 10px;
     font-size: 13px;
@@ -330,6 +354,17 @@ export default {
 
 .detail-time {
     color: #64748B;
+}
+
+.detail-risk {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    color: #475569;
+    line-height: 1.6;
 }
 
 .detail-block h4 {

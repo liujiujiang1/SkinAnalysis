@@ -38,6 +38,10 @@ public class RecordService {
         return recordRepository.findByUserUsernameOrderByTimeDesc(username);
     }
 
+    public List<Record> getRecordsByLesionProfileId(Long lesionProfileId) {
+        return recordRepository.findByLesionProfileIdOrderByTimeDesc(lesionProfileId);
+    }
+
     public List<Record> getRecentRecords() {
         return recordRepository.findTop10ByOrderByTimeDesc();
     }

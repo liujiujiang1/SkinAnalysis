@@ -27,6 +27,13 @@ public class Record {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String adviceTreatment;
+    private String riskLevel;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String riskAdvice;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "lesion_profile_id")
+    private LesionProfile lesionProfile;
 
     public Long getId() {
         return id;
@@ -64,6 +71,18 @@ public class Record {
         return adviceTreatment;
     }
 
+    public String getRiskLevel() {
+        return riskLevel;
+    }
+
+    public String getRiskAdvice() {
+        return riskAdvice;
+    }
+
+    public LesionProfile getLesionProfile() {
+        return lesionProfile;
+    }
+
     public UserInfo getUser() {
         return user;
     }
@@ -98,5 +117,17 @@ public class Record {
 
     public void setAdviceTreatment(String adviceTreatment) {
         this.adviceTreatment = adviceTreatment;
+    }
+
+    public void setRiskLevel(String riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public void setRiskAdvice(String riskAdvice) {
+        this.riskAdvice = riskAdvice;
+    }
+
+    public void setLesionProfile(LesionProfile lesionProfile) {
+        this.lesionProfile = lesionProfile;
     }
 }

@@ -41,6 +41,12 @@
                     </el-image>
                 </div>
                 <div class="upload-section">
+                    <div class="lesion-linker">
+                        <el-select v-model="selectedLesionId" placeholder="关联随访档案（可选）" clearable class="lesion-select">
+                            <el-option v-for="item in lesionProfiles" :key="item.id" :label="`${item.title} · ${item.bodySite || '未标注部位'}`" :value="item.id" />
+                        </el-select>
+                        <el-button plain @click="lesionDialogVisible = true">新建随访</el-button>
+                    </div>
                     <el-upload
                         ref="upload"
                         class="upload-demo"
@@ -90,6 +96,13 @@
                             </div>
                         </div>
                     </div>
+                    <div class="risk-card" :class="riskAssessment.tagType">
+                        <div class="risk-top">
+                            <span>{{ riskAssessment.level }}</span>
+                            <el-tag :type="riskAssessment.tagType" effect="dark">{{ riskAssessment.action }}</el-tag>
+                        </div>
+                        <p>{{ riskAssessment.advice }}</p>
+                    </div>
                     <div class="advice-card">
                         <div class="card-header">
                             <el-icon class="header-icon"><Document /></el-icon>
@@ -128,6 +141,23 @@
                 <el-button type="primary" @click="submitFeedback">提交反馈</el-button>
             </div>
         </div>
+        <el-dialog v-model="lesionDialogVisible" title="新建随访档案" width="420px">
+            <el-form label-position="top" :model="newLesionForm">
+                <el-form-item label="档案名称">
+                    <el-input v-model="newLesionForm.title" placeholder="例如：左前臂色素痣" />
+                </el-form-item>
+                <el-form-item label="皮损部位">
+                    <el-input v-model="newLesionForm.bodySite" placeholder="例如：左前臂、面部、背部" />
+                </el-form-item>
+                <el-form-item label="备注">
+                    <el-input v-model="newLesionForm.note" type="textarea" :rows="3" placeholder="记录发现时间、大小变化或症状" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="lesionDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="createLesionProfile">保存</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -136,6 +166,7 @@ import {ElMessageBox} from "element-plus";
 import { Picture, Upload, UploadFilled, Document, FirstAidKit, TrendCharts } from '@element-plus/icons-vue';
 import { diseaseKnowledge } from '../data/diseaseKnowledge'
 import { createDiseaseMap, fetchDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
+import { buildRiskAssessment } from '../utils/risk'
 export default {
     components: {
         Picture,
@@ -156,6 +187,15 @@ export default {
             imageData: '',
             selectedIndex: 0,
             latestRecordId: null,
+            selectedLesionId: null,
+            lesionProfiles: [],
+            lesionDialogVisible: false,
+            newLesionForm: {
+                title: '',
+                bodySite: '',
+                note: ''
+            },
+            riskAssessment: buildRiskAssessment(),
             diseaseOptions: diseaseKnowledge,
             knowledgeMap: createDiseaseMap(diseaseKnowledge),
             feedbackForm: {
@@ -222,12 +262,39 @@ export default {
     },
     mounted() {
         this.loadDiseaseKnowledge()
+        this.loadLesionProfiles()
     },
     methods: {
         async loadDiseaseKnowledge() {
             const knowledge = await fetchDiseaseKnowledge()
             this.diseaseOptions = knowledge
             this.knowledgeMap = createDiseaseMap(knowledge)
+        },
+        async loadLesionProfiles() {
+            const username = sessionStorage.getItem('user_name')
+            if (!username) return
+            const response = await this.axios.get(`/spring_api/lesion-profile/user/${username}`)
+            this.lesionProfiles = response.data || []
+        },
+        async createLesionProfile() {
+            if (!this.newLesionForm.title.trim()) {
+                ElMessageBox.alert("请填写随访档案名称。", {
+                    title:"提示",
+                    confirmButtonText:"确定",
+                    type:"warning"
+                })
+                return
+            }
+            const response = await this.axios.post('/spring_api/lesion-profile', {
+                username: sessionStorage.getItem('user_name'),
+                title: this.newLesionForm.title,
+                bodySite: this.newLesionForm.bodySite,
+                note: this.newLesionForm.note
+            })
+            this.lesionProfiles.unshift(response.data)
+            this.selectedLesionId = response.data.id
+            this.newLesionForm = { title: '', bodySite: '', note: '' }
+            this.lesionDialogVisible = false
         },
         handleChange(file){
             this.fileList.url = URL.createObjectURL(file.raw)
@@ -261,6 +328,7 @@ export default {
                     }
                 }
                 this.results = [buildResult(res[0]), buildResult(res[1]), buildResult(res[2])];
+                this.riskAssessment = buildRiskAssessment(this.results[0])
                 
                 this.selectedIndex = 0;
                 this.selectResult(0);
@@ -302,7 +370,10 @@ export default {
                 'topResults': JSON.stringify(this.results),
                 'imageData': this.imageData,
                 'adviceBrief': advice.brief,
-                'adviceTreatment': advice.treatment
+                'adviceTreatment': advice.treatment,
+                'riskLevel': this.riskAssessment.level,
+                'riskAdvice': this.riskAssessment.advice,
+                'lesionProfileId': this.selectedLesionId
             },
             {
               headers: {
@@ -505,6 +576,17 @@ export default {
         align-items: center;
     }
 
+    .lesion-linker {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .lesion-select {
+        flex: 1;
+    }
+
     .upload-demo {
         width: 100%;
         display: flex;
@@ -572,6 +654,45 @@ export default {
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .risk-card {
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid #E2E8F0;
+        background: #F8FAFC;
+    }
+
+    .risk-card.danger {
+        background: #FEF2F2;
+        border-color: #FCA5A5;
+    }
+
+    .risk-card.warning {
+        background: #FFFBEB;
+        border-color: #FCD34D;
+    }
+
+    .risk-card.success {
+        background: #ECFDF5;
+        border-color: #86EFAC;
+    }
+
+    .risk-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #0F172A;
+    }
+
+    .risk-card p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.6;
+        font-size: 13px;
     }
 
     .advice-card {
@@ -761,6 +882,11 @@ export default {
         .select-btn,
         .upload-btn {
             max-width: none;
+        }
+
+        .lesion-linker {
+            display: grid;
+            grid-template-columns: 1fr;
         }
     }
 

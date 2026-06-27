@@ -43,6 +43,8 @@ export function buildDiagnosisReportHtml(record, options = {}) {
     img { width: 100%; max-height: 360px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
     .result { padding: 16px; border-radius: 8px; background: #f0fdfa; border: 1px solid #99f6e4; }
     .result strong { display: block; font-size: 28px; color: #0f766e; margin: 6px 0; }
+    .risk { margin-top: 12px; padding: 12px; border-radius: 8px; background: #fffbeb; color: #92400e; line-height: 1.7; }
+    .risk b { display: block; color: #78350f; margin-bottom: 4px; }
     .bar { height: 9px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin: 6px 0 12px; }
     .bar span { display: block; height: 100%; background: #0891b2; }
     section { margin-top: 24px; }
@@ -68,6 +70,7 @@ export function buildDiagnosisReportHtml(record, options = {}) {
         <div>置信度 ${escapeHtml(formatProbability(record.probability))}%</div>
         <div class="bar"><span style="width:${Math.min(100, Number(record.probability || 0))}%"></span></div>
         <small>本结果由皮肤图像识别模型生成，仅作为健康管理参考。</small>
+        <div class="risk"><b>风险分级：${escapeHtml(record.riskLevel || '未分级')}</b>${escapeHtml(record.riskAdvice || '暂无就医提醒')}</div>
       </div>
     </div>
     <section>

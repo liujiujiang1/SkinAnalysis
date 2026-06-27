@@ -1,11 +1,14 @@
 package edu.whut.skinhealth.controller;
 
 import edu.whut.skinhealth.entity.User;
+import edu.whut.skinhealth.entity.LesionProfile;
 import edu.whut.skinhealth.po.DiseaseCount;
 import edu.whut.skinhealth.entity.Record;
 import edu.whut.skinhealth.po.RecordRequest;
 import edu.whut.skinhealth.po.UserInfo;
+import edu.whut.skinhealth.service.LesionProfileService;
 import edu.whut.skinhealth.service.RecordService;
+import edu.whut.skinhealth.service.ReviewTaskService;
 import edu.whut.skinhealth.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +24,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("record")
@@ -31,6 +35,12 @@ public class RecordController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private LesionProfileService lesionProfileService;
+
+    @Autowired
+    private ReviewTaskService reviewTaskService;
 
     @GetMapping("queryCount")
     private ResponseEntity<List<DiseaseCount>> queryCount(){
@@ -74,9 +84,17 @@ public class RecordController {
             record.setImageData(recordRequest.getImageData());
             record.setAdviceBrief(recordRequest.getAdviceBrief());
             record.setAdviceTreatment(recordRequest.getAdviceTreatment());
+            record.setRiskLevel(defaultIfBlank(recordRequest.getRiskLevel(), calculateRiskLevel(recordRequest.getDisease(), recordRequest.getProbability())));
+            record.setRiskAdvice(defaultIfBlank(recordRequest.getRiskAdvice(), defaultRiskAdvice(record.getRiskLevel(), record.getDisease())));
             record.setTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
+            if (recordRequest.getLesionProfileId() != null) {
+                Optional<LesionProfile> lesionProfile = lesionProfileService.getById(recordRequest.getLesionProfileId());
+                lesionProfile.ifPresent(record::setLesionProfile);
+            }
 
-            return new ResponseEntity<>(recordService.addRecord(record), HttpStatus.OK);
+            Record saved = recordService.addRecord(record);
+            reviewTaskService.createForRecordIfNeeded(saved);
+            return new ResponseEntity<>(saved, HttpStatus.OK);
         }catch(Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -95,6 +113,15 @@ public class RecordController {
     private ResponseEntity<List<Record>> queryRecordsByUsername(@PathVariable("username") String username){
         try{
             return new ResponseEntity<>(recordService.getRecordsByUsername(username), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("lesion/{lesionProfileId}")
+    private ResponseEntity<List<Record>> queryRecordsByLesionProfile(@PathVariable("lesionProfileId") Long lesionProfileId){
+        try{
+            return new ResponseEntity<>(recordService.getRecordsByLesionProfileId(lesionProfileId), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -214,5 +241,41 @@ public class RecordController {
         return "\"" + text.replace("\"", "\"\"") + "\"";
     }
 
+    private String calculateRiskLevel(String disease, Double probability) {
+        double score = probability == null ? 0.0 : probability;
+        if ("MEL".equals(disease)) {
+            return score >= 40 ? "高风险" : "中风险";
+        }
+        if ("BCC".equals(disease)) {
+            return score >= 50 ? "中高风险" : "中风险";
+        }
+        if ("AKIEC".equals(disease)) {
+            return score >= 60 ? "中风险" : "低到中风险";
+        }
+        if (score < 60) {
+            return "低置信度";
+        }
+        return "低风险";
+    }
+
+    private String defaultRiskAdvice(String riskLevel, String disease) {
+        if (riskLevel == null) {
+            return "结果仅供健康管理参考，不能替代医生面诊。";
+        }
+        if (riskLevel.contains("高")) {
+            return "建议尽快到皮肤科就医，必要时完善皮肤镜或病理检查。不要自行切除、腐蚀或长期拖延观察。";
+        }
+        if (riskLevel.contains("中")) {
+            return "建议结合症状变化预约皮肤科评估，若出现快速增大、出血、破溃、疼痛或颜色明显变化，请及时就医。";
+        }
+        if ("低置信度".equals(riskLevel)) {
+            return "模型置信度偏低，建议重新上传清晰、光线均匀、主体完整的图片，必要时咨询医生。";
+        }
+        return "建议定期观察皮损大小、颜色、边界和症状变化，保持防晒并避免反复刺激。";
+    }
+
+    private String defaultIfBlank(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
 
 }

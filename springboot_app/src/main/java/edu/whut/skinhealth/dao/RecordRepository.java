@@ -14,6 +14,8 @@ public interface RecordRepository extends JpaRepository<Record, Long>, JpaSpecif
 
     List<Record> findByUserUsernameOrderByTimeDesc(String username);
 
+    List<Record> findByLesionProfileIdOrderByTimeDesc(Long lesionProfileId);
+
     List<Record> findTop10ByOrderByTimeDesc();
 
     @Query(value = "SELECT r.disease, COUNT(r.disease) FROM record as r GROUP BY r.disease", nativeQuery = true)

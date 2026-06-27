@@ -44,6 +44,12 @@
                         </template>
                         <span class="menu-text" v-show="!isCollapsed">反馈标注</span>
                     </el-menu-item>
+                    <el-menu-item index="5">
+                        <template #icon>
+                            <el-icon><Checked /></el-icon>
+                        </template>
+                        <span class="menu-text" v-show="!isCollapsed">审核工作台</span>
+                    </el-menu-item>
                 </el-menu>
             </el-aside>
             
@@ -118,7 +124,7 @@
 </template>
 
 <script lang="ts">
-import { User, DataAnalysis, Tickets, SwitchButton, Fold, Close, WarningFilled, Reading, ChatLineSquare } from '@element-plus/icons-vue';
+import { User, DataAnalysis, Tickets, SwitchButton, Fold, Close, WarningFilled, Reading, ChatLineSquare, Checked } from '@element-plus/icons-vue';
 
 export default {
     name: "backend",
@@ -131,7 +137,8 @@ export default {
         Close,
         WarningFilled,
         Reading,
-        ChatLineSquare
+        ChatLineSquare,
+        Checked
     },
     data() {
         return {
@@ -150,6 +157,7 @@ export default {
             if (path.includes('/records')) return '2';
             if (path.includes('/wiki')) return '3';
             if (path.includes('/feedback')) return '4';
+            if (path.includes('/review')) return '5';
             return '0';
         }
     },
@@ -183,6 +191,8 @@ export default {
                 case "3":   this.$router.push("/admin/background/wiki");
                 break;
                 case "4":   this.$router.push("/admin/background/feedback");
+                break;
+                case "5":   this.$router.push("/admin/background/review");
                 break;
             }
         },

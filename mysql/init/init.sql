@@ -661,7 +661,10 @@ ALTER TABLE `record`
   ADD COLUMN `top_results` longtext NULL,
   ADD COLUMN `image_data` longtext NULL,
   ADD COLUMN `advice_brief` text NULL,
-  ADD COLUMN `advice_treatment` text NULL;
+  ADD COLUMN `advice_treatment` text NULL,
+  ADD COLUMN `risk_level` varchar(255) NULL,
+  ADD COLUMN `risk_advice` text NULL,
+  ADD COLUMN `lesion_profile_id` bigint NULL;
 
 ALTER TABLE `user`
   ADD COLUMN `security_question` varchar(255) NULL DEFAULT '是否为患者',
@@ -687,6 +690,29 @@ WHERE u.`id` IS NULL;
 ALTER TABLE `record`
   ADD CONSTRAINT `fk_record_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
 
+CREATE TABLE IF NOT EXISTS `lesion_profile` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `title` varchar(255) NULL,
+  `body_site` varchar(255) NULL,
+  `status` varchar(255) NULL,
+  `created_time` datetime NULL,
+  `updated_time` datetime NULL,
+  `note` text NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  CONSTRAINT `fk_lesion_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+CREATE TABLE IF NOT EXISTS `chat_message` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NULL,
+  `sender` varchar(255) NULL,
+  `created_time` datetime NULL,
+  `content` text NULL,
+  `safety_tags` text NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
 CREATE TABLE IF NOT EXISTS `feedback` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `record_id` bigint NULL,
@@ -702,6 +728,23 @@ CREATE TABLE IF NOT EXISTS `feedback` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
+CREATE TABLE IF NOT EXISTS `review_task` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `record_id` bigint NULL,
+  `feedback_id` bigint NULL,
+  `task_type` varchar(255) NULL,
+  `username` varchar(255) NULL,
+  `disease` varchar(255) NULL,
+  `risk_level` varchar(255) NULL,
+  `status` varchar(255) NULL,
+  `training_candidate` bit(1) NULL,
+  `created_time` datetime NULL,
+  `updated_time` datetime NULL,
+  `reason` text NULL,
+  `review_note` text NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
 CREATE TABLE IF NOT EXISTS `disease_knowledge` (
   `code` varchar(20) NOT NULL,
   `name` varchar(255) NULL,
@@ -710,6 +753,11 @@ CREATE TABLE IF NOT EXISTS `disease_knowledge` (
   `symptoms` text NULL,
   `advice` text NULL,
   `cautions` text NULL,
+  `source` varchar(255) NULL DEFAULT 'ISIC2019 数据集与皮肤科通用健康管理建议',
+  `version` varchar(255) NULL DEFAULT 'v1.0',
+  `editor` varchar(255) NULL DEFAULT 'system',
+  `review_status` varchar(255) NULL DEFAULT '已审核',
+  `updated_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`code`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
@@ -727,7 +775,12 @@ ON DUPLICATE KEY UPDATE
   `intro` = VALUES(`intro`),
   `symptoms` = VALUES(`symptoms`),
   `advice` = VALUES(`advice`),
-  `cautions` = VALUES(`cautions`);
+  `cautions` = VALUES(`cautions`),
+  `source` = COALESCE(`source`, 'ISIC2019 数据集与皮肤科通用健康管理建议'),
+  `version` = COALESCE(`version`, 'v1.0'),
+  `editor` = COALESCE(`editor`, 'system'),
+  `review_status` = COALESCE(`review_status`, '已审核'),
+  `updated_time` = COALESCE(`updated_time`, NOW());
 
 SET FOREIGN_KEY_CHECKS = 1;
 

@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
+import java.sql.Timestamp;
+
 @Entity
 @Table(name = "disease_knowledge")
 public class DiseaseKnowledge {
@@ -31,6 +33,11 @@ public class DiseaseKnowledge {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String cautions;
+    private String source;
+    private String version;
+    private String editor;
+    private String reviewStatus;
+    private Timestamp updatedTime;
 
     public String getCode() {
         return code;
@@ -84,7 +91,47 @@ public class DiseaseKnowledge {
         return cautions;
     }
 
+    public String getSource() {
+        return source;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getEditor() {
+        return editor;
+    }
+
+    public String getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public Timestamp getUpdatedTime() {
+        return updatedTime;
+    }
+
     public void setCautions(String cautions) {
         this.cautions = cautions;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public void setEditor(String editor) {
+        this.editor = editor;
+    }
+
+    public void setReviewStatus(String reviewStatus) {
+        this.reviewStatus = reviewStatus;
+    }
+
+    public void setUpdatedTime(Timestamp updatedTime) {
+        this.updatedTime = updatedTime;
     }
 }

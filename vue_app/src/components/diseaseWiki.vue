@@ -34,6 +34,10 @@
                     <strong>注意事项</strong>
                     <span>{{ item.cautions.join('；') }}</span>
                 </div>
+                <div class="meta-row">
+                    <span>来源：{{ item.source }}</span>
+                    <span>{{ item.version }} · {{ item.reviewStatus }}</span>
+                </div>
                 <el-button v-if="isAdmin" class="edit-btn" type="primary" plain @click="openEditor(item)">编辑知识</el-button>
             </section>
         </div>
@@ -66,6 +70,22 @@
                 </el-form-item>
                 <el-form-item label="注意事项（一行一条）">
                     <el-input v-model="editForm.cautionsText" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="资料来源">
+                    <el-input v-model="editForm.source" />
+                </el-form-item>
+                <el-form-item label="版本号">
+                    <el-input v-model="editForm.version" />
+                </el-form-item>
+                <el-form-item label="编辑人">
+                    <el-input v-model="editForm.editor" />
+                </el-form-item>
+                <el-form-item label="审核状态">
+                    <el-select v-model="editForm.reviewStatus" class="full-input">
+                        <el-option label="待审核" value="待审核" />
+                        <el-option label="已审核" value="已审核" />
+                        <el-option label="需修订" value="需修订" />
+                    </el-select>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -112,7 +132,9 @@ export default {
                 ...item,
                 symptomsText: item.symptoms.join('\n'),
                 adviceText: item.advice.join('\n'),
-                cautionsText: item.cautions.join('\n')
+                cautionsText: item.cautions.join('\n'),
+                editor: sessionStorage.getItem('admin_name') || item.editor || 'admin',
+                reviewStatus: item.reviewStatus || '待审核'
             }
             this.editorVisible = true
         },
@@ -124,7 +146,11 @@ export default {
                 intro: this.editForm.intro,
                 symptoms: this.editForm.symptomsText,
                 advice: this.editForm.adviceText,
-                cautions: this.editForm.cautionsText
+                cautions: this.editForm.cautionsText,
+                source: this.editForm.source,
+                version: this.editForm.version,
+                editor: this.editForm.editor,
+                reviewStatus: this.editForm.reviewStatus
             })
             const index = this.diseases.findIndex((item) => item.code === saved.code)
             if (index >= 0) {
@@ -237,6 +263,16 @@ export default {
         color: #B45309;
         margin-bottom: 4px;
     }
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    color: #64748B;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .edit-btn {

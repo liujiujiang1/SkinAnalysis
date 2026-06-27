@@ -6,6 +6,7 @@ import edu.whut.skinhealth.po.FeedbackInfo;
 import edu.whut.skinhealth.po.FeedbackRequest;
 import edu.whut.skinhealth.service.FeedbackService;
 import edu.whut.skinhealth.service.RecordService;
+import edu.whut.skinhealth.service.ReviewTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ public class FeedbackController {
 
     @Autowired
     private RecordService recordService;
+
+    @Autowired
+    private ReviewTaskService reviewTaskService;
 
     @PostMapping
     public ResponseEntity<Feedback> addFeedback(@RequestBody FeedbackRequest request) {
@@ -53,7 +57,9 @@ public class FeedbackController {
             }
             feedback.setFeedbackTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
 
-            return new ResponseEntity<>(feedbackService.saveFeedback(feedback), HttpStatus.OK);
+            Feedback saved = feedbackService.saveFeedback(feedback);
+            reviewTaskService.createForFeedbackIfNeeded(saved);
+            return new ResponseEntity<>(saved, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

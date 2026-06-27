@@ -1,6 +1,9 @@
 <template>
     <div class="chat-container">
         <div class="chat-messages" ref="chatMessages">      
+            <div v-if="safetyWarning" class="safety-warning">
+                检测到可能的高危症状描述。如存在快速增大、出血、破溃、明显疼痛或颜色异常，请尽快线下就医。
+            </div>
             <div 
                 v-for="(message, index) in messages" 
                 :key="index" 
@@ -23,6 +26,11 @@
             </div>
         </div>
         
+        <div class="question-chips" v-if="questionChips.length">
+            <button v-for="question in questionChips" :key="question" @click="sendSuggestion(question)">
+                {{ question }}
+            </button>
+        </div>
         <div class="input-container">
             <el-input 
                 class="chat-input" 
@@ -55,6 +63,7 @@ import { ChatDotRound, Promotion } from '@element-plus/icons-vue';
 import {api_key} from '../../zhipu_api-key.js'
 import { diseaseName } from '../data/diseaseKnowledge'
 import { createDiseaseMap, fetchDiseaseKnowledge } from '../utils/diseaseKnowledgeService'
+import { hasUrgentSymptoms, recommendedQuestions } from '../utils/risk'
 
 export default {
     components: {
@@ -67,14 +76,22 @@ export default {
             messages: [{content: '您好，很高兴为您服务！请问您有什么需要帮助的吗？', sender: 'bot'}],
             loading: false,
             latestDiagnosis: null,
-            knowledgeMap: {}
+            knowledgeMap: {},
+            safetyWarning: false
         };
+    },
+    computed: {
+        questionChips() {
+            return recommendedQuestions(this.latestDiagnosis)
+        }
     },
     methods: {
         async sendMessage() {
             if (!this.newMessage.trim()) return;
-            
-            this.messages.push({ content: this.newMessage, sender: 'user' });
+            const content = this.newMessage.trim()
+            this.safetyWarning = this.safetyWarning || hasUrgentSymptoms(content)
+            this.messages.push({ content, sender: 'user' });
+            this.saveMessage(content, 'user', this.safetyWarning ? 'urgent_symptom' : '')
             this.newMessage = '';
 
             await this.$nextTick();
@@ -86,6 +103,7 @@ export default {
                 const reply = await this.getBotReply(this.messages[this.messages.length - 1].content);
                 this.loading = false;
                 this.messages.push({ content: '', sender: 'bot' });
+                this.saveMessage(reply, 'bot', hasUrgentSymptoms(reply) ? 'urgent_symptom' : '')
 
                 let index = 0;
                 const timer = setInterval(() => {
@@ -101,10 +119,17 @@ export default {
                 }, 30);
             } catch (error) {
                 this.loading = false;
-                this.messages.push({ content: '出现问题，请检查智普AI API-Key是否正确！', sender: 'bot' });
+                const fallback = '出现问题，请检查智普AI API-Key是否正确！'
+                this.messages.push({ content: fallback, sender: 'bot' });
+                this.saveMessage(fallback, 'bot', '')
                 this.$nextTick();
                 this.scrollToBottom();
             }
+        },
+        sendSuggestion(question) {
+            if (this.loading) return
+            this.newMessage = question
+            this.sendMessage()
         },
         async getBotReply(message) {
             try {
@@ -114,7 +139,7 @@ export default {
                     {
                         model: 'glm-4-flash',
                         messages: [
-                            {role: 'system', content: '你是一位专业的皮肤科医生，请用专业、友好的口吻回答用户关于皮肤健康的问题。'},
+                            {role: 'system', content: '你是皮肤健康问答助手。请用专业、友好的口吻解释皮肤健康知识，但不能给出最终诊断、不能替代医生面诊、皮肤镜或病理检查。遇到快速增大、出血、破溃、明显疼痛、颜色明显变化、疑似黑色素瘤或基底细胞癌等情况，要明确建议尽快线下就医。'},
                             {role: 'system', content: context},
                             {role: 'user', content: message}
                         ]
@@ -142,6 +167,29 @@ export default {
             const response = await this.axios.get(`/spring_api/record/user/${username}`)
             this.latestDiagnosis = (response.data || [])[0] || null
         },
+        async loadChatHistory() {
+            const username = sessionStorage.getItem('user_name')
+            if (!username) return
+            const response = await this.axios.get(`/spring_api/chat-message/user/${username}`)
+            const savedMessages = response.data || []
+            if (savedMessages.length) {
+                this.messages = savedMessages.map((item) => ({
+                    content: item.content,
+                    sender: item.sender
+                }))
+                this.safetyWarning = savedMessages.some((item) => (item.safetyTags || '').includes('urgent_symptom'))
+            }
+        },
+        async saveMessage(content, sender, safetyTags) {
+            const username = sessionStorage.getItem('user_name')
+            if (!username || !content) return
+            await this.axios.post('/spring_api/chat-message', {
+                username,
+                sender,
+                content,
+                safetyTags
+            })
+        },
         async loadDiseaseKnowledge() {
             this.knowledgeMap = createDiseaseMap(await fetchDiseaseKnowledge())
         },
@@ -159,6 +207,7 @@ export default {
     mounted() {
         this.loadDiseaseKnowledge();
         this.loadLatestDiagnosis();
+        this.loadChatHistory();
         this.scrollToBottom();
     }
 };
@@ -188,6 +237,36 @@ export default {
         flex-direction: column;
         gap: 12px;
         scroll-behavior: smooth;
+    }
+
+    .safety-warning {
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #FEF2F2;
+        border: 1px solid #FCA5A5;
+        color: #991B1B;
+        line-height: 1.6;
+        font-size: 13px;
+    }
+
+    .question-chips {
+        display: flex;
+        gap: 8px;
+        padding: 10px 16px 0;
+        overflow-x: auto;
+        background: white;
+        border-top: 1px solid #E2E8F0;
+    }
+
+    .question-chips button {
+        flex: 0 0 auto;
+        border: 1px solid #99F6E4;
+        background: #F0FDFA;
+        color: #0F766E;
+        border-radius: 999px;
+        padding: 7px 12px;
+        cursor: pointer;
+        font-size: 13px;
     }
 
     .message-container {
@@ -443,6 +522,10 @@ export default {
         .typing-dots span {
             width: 6px;
             height: 6px;
+        }
+
+        .question-chips {
+            padding: 8px 12px 0;
         }
     }
 
