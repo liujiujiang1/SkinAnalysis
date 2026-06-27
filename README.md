@@ -4,7 +4,7 @@
 
 模型训练数据集来源：ISIC2019。受数据集范围限制，当前仅支持部分皮肤疾病的辅助识别，结果仅供健康管理参考，不能替代医生面诊、皮肤镜检查或病理诊断。
 
-## 功能概览
+## 核心功能
 
 - 用户端图像诊断：上传皮肤图片，查看 Top 3 识别结果、概率、疾病简介和建议。
 - 诊断报告：诊断历史支持详情查看、筛选和报告下载。
@@ -14,7 +14,7 @@
 - 管理后台：用户管理、诊断记录、数据统计、反馈审核、模型表现看板。
 - 反馈闭环：用户可反馈识别结果是否准确，管理端可审核并统计模型表现。
 
-## 技术架构
+## 系统架构
 
 - 前端：Vue 3 + Vite + Element Plus + ECharts
 - 模型服务：Flask + ONNX
@@ -44,7 +44,7 @@ SkinAnalysis
 ├── onnx_app/         # Flask 模型服务
 ├── mysql/init/       # 数据库初始化脚本
 ├── scripts/          # 本地启动/停止脚本
-├── assets/           # README 效果图
+├── assets/           # README 功能截图
 └── 测试图片/          # 可用于测试上传的皮肤图片
 ```
 
@@ -158,23 +158,51 @@ $env:Path="$env:JAVA_HOME\bin;$env:Path"
 .\mvnw.cmd test
 ```
 
-## 效果展示
+## 界面预览
 
-用户登录页：
+### 用户端
 
-![用户登录页](assets/效果图0.png)
+登录与注册入口：
 
-图像诊断：
+![用户登录](assets/user-login.png)
 
-![图像诊断](assets/效果图1.png)
+图像诊断与模型分析：
 
-AI 问答：
+![图像诊断](assets/user-diagnosis-upload.png)
 
-![AI 问答](assets/效果图2.png)
+诊断历史筛选：
 
-后台统计：
+![诊断历史](assets/user-history-empty.png)
 
-![后台统计](assets/效果图3.png)
+个人资料维护：
+
+![个人资料](assets/user-profile.png)
+
+疾病百科：
+
+![疾病百科](assets/user-disease-wiki.png)
+
+移动端 AI 问答：
+
+![AI 问答](assets/user-ai-chat-mobile.png)
+
+### 管理端
+
+用户管理：
+
+![用户管理](assets/admin-user-management.png)
+
+数据统计：
+
+![数据统计](assets/admin-statistics-dashboard.png)
+
+诊断记录管理：
+
+![诊断记录](assets/admin-diagnosis-records.png)
+
+反馈审核与模型表现：
+
+![反馈审核](assets/admin-feedback-review.png)
 
 ## 更多本地说明
 
