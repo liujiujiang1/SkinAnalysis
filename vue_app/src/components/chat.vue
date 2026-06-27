@@ -100,7 +100,7 @@ export default {
             this.loading = true;
   
             try {
-                const reply = await this.getBotReply(this.messages[this.messages.length - 1].content);
+                const reply = this.normalizeBotReply(await this.getBotReply(this.messages[this.messages.length - 1].content));
                 this.loading = false;
                 this.messages.push({ content: '', sender: 'bot' });
                 this.saveMessage(reply, 'bot', hasUrgentSymptoms(reply) ? 'urgent_symptom' : '')
@@ -130,6 +130,17 @@ export default {
             if (this.loading) return
             this.newMessage = question
             this.sendMessage()
+        },
+        normalizeBotReply(reply) {
+            let content = reply || ''
+            const unsafePatterns = ['确诊为', '一定是', '无需就医', '不用就医', '肯定不是恶性']
+            const hasUnsafeTone = unsafePatterns.some((pattern) => content.includes(pattern))
+            if (hasUnsafeTone) {
+                content += '\n\n安全提示：线上问答不能给出最终诊断。请结合医生面诊、皮肤镜或病理检查判断，若症状持续或加重请及时就医。'
+            } else if (!content.includes('不能替代医生') && !content.includes('不能替代面诊')) {
+                content += '\n\n提示：以上内容仅供健康管理参考，不能替代医生面诊、皮肤镜或病理检查。'
+            }
+            return content
         },
         async getBotReply(message) {
             try {

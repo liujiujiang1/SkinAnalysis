@@ -51,9 +51,9 @@ public class LesionProfileController {
 
     @PutMapping("{id}")
     public ResponseEntity<LesionProfile> update(@PathVariable("id") Long id, @RequestBody Map<String, String> request) {
-        Optional<LesionProfile> optional = lesionProfileService.getById(id);
+        Optional<LesionProfile> optional = lesionProfileService.getByIdAndUsername(id, request.get("username"));
         if (optional.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         LesionProfile lesionProfile = optional.get();
         lesionProfile.setTitle(defaultIfBlank(request.get("title"), lesionProfile.getTitle()));

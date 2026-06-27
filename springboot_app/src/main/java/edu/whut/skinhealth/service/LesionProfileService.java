@@ -23,6 +23,13 @@ public class LesionProfileService {
         return lesionProfileRepository.findById(id);
     }
 
+    public Optional<LesionProfile> getByIdAndUsername(Long id, String username) {
+        return lesionProfileRepository.findById(id)
+                .filter(item -> item.getUser() != null
+                        && item.getUser().getUsername() != null
+                        && item.getUser().getUsername().equals(username));
+    }
+
     public List<LesionProfile> getByUsername(String username) {
         return lesionProfileRepository.findByUserUsernameOrderByUpdatedTimeDesc(username);
     }

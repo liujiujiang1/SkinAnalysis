@@ -47,12 +47,11 @@ public class ReviewTaskService {
         if (record == null || record.getId() == null) {
             return;
         }
-        Double probability = record.getProbability() == null ? 0.0 : record.getProbability();
         String riskLevel = record.getRiskLevel() == null ? "" : record.getRiskLevel();
-        if (isHighRisk(riskLevel)) {
+        if (isHighRisk(riskLevel, record.getDisease())) {
             createRecordTask(record, "高风险诊断", "系统识别为高风险或中高风险，建议管理员复核诊断记录和就医提醒。");
         }
-        if (probability < 60.0) {
+        if (record.getProbability() != null && record.getProbability() < 60.0) {
             createRecordTask(record, "低置信度诊断", "模型首要结果置信度低于 60%，建议检查图片质量和 Top3 分布。");
         }
     }
@@ -76,6 +75,19 @@ public class ReviewTaskService {
         save(task);
     }
 
+    public void backfillMissingTasks(List<Record> records, List<Feedback> feedbackList) {
+        if (records != null) {
+            for (Record record : records) {
+                createForRecordIfNeeded(record);
+            }
+        }
+        if (feedbackList != null) {
+            for (Feedback feedback : feedbackList) {
+                createForFeedbackIfNeeded(feedback);
+            }
+        }
+    }
+
     private void createRecordTask(Record record, String taskType, String reason) {
         Optional<ReviewTask> existed = reviewTaskRepository.findTopByRecordIdAndTaskType(record.getId(), taskType);
         if (existed.isPresent()) {
@@ -92,8 +104,8 @@ public class ReviewTaskService {
         save(task);
     }
 
-    private boolean isHighRisk(String riskLevel) {
-        return riskLevel.contains("高");
+    private boolean isHighRisk(String riskLevel, String disease) {
+        return riskLevel.contains("高") || "MEL".equals(disease) || "BCC".equals(disease);
     }
 
     private Timestamp now() {

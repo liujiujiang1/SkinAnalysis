@@ -42,6 +42,10 @@ public class RecordService {
         return recordRepository.findByLesionProfileIdOrderByTimeDesc(lesionProfileId);
     }
 
+    public List<Record> getRecordsByLesionProfileIdAndUsername(Long lesionProfileId, String username) {
+        return recordRepository.findByLesionProfileIdAndUserUsernameOrderByTimeDesc(lesionProfileId, username);
+    }
+
     public List<Record> getRecentRecords() {
         return recordRepository.findTop10ByOrderByTimeDesc();
     }

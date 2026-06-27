@@ -148,7 +148,9 @@ export default {
         },
         async selectProfile(profile) {
             this.selectedProfile = profile
-            const response = await this.axios.get(`/spring_api/record/lesion/${profile.id}`)
+            const response = await this.axios.get(`/spring_api/record/lesion/${profile.id}`, {
+                params: { username: sessionStorage.getItem('user_name') }
+            })
             this.records = response.data || []
         },
         openCreate() {

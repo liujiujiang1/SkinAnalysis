@@ -1,6 +1,8 @@
 package edu.whut.skinhealth.controller;
 
 import edu.whut.skinhealth.entity.ReviewTask;
+import edu.whut.skinhealth.service.FeedbackService;
+import edu.whut.skinhealth.service.RecordService;
 import edu.whut.skinhealth.service.ReviewTaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,13 +16,23 @@ import java.util.Optional;
 @RequestMapping("review-task")
 public class ReviewTaskController {
     private final ReviewTaskService reviewTaskService;
+    private final RecordService recordService;
+    private final FeedbackService feedbackService;
 
-    public ReviewTaskController(ReviewTaskService reviewTaskService) {
+    public ReviewTaskController(ReviewTaskService reviewTaskService, RecordService recordService, FeedbackService feedbackService) {
         this.reviewTaskService = reviewTaskService;
+        this.recordService = recordService;
+        this.feedbackService = feedbackService;
     }
 
     @GetMapping
     public ResponseEntity<List<ReviewTask>> queryAll() {
+        return new ResponseEntity<>(reviewTaskService.getAll(), HttpStatus.OK);
+    }
+
+    @PostMapping("sync")
+    public ResponseEntity<List<ReviewTask>> syncMissingTasks() {
+        reviewTaskService.backfillMissingTasks(recordService.getAllRecords(), feedbackService.getAllFeedback());
         return new ResponseEntity<>(reviewTaskService.getAll(), HttpStatus.OK);
     }
 

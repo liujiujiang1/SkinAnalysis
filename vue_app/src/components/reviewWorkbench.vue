@@ -39,6 +39,7 @@
                     <el-option label="疑似误判" value="疑似误判" />
                 </el-select>
                 <el-button @click="loadTasks">刷新</el-button>
+                <el-button type="primary" plain @click="syncTasks">同步任务</el-button>
             </div>
 
             <el-table :data="filteredTasks" stripe>
@@ -147,6 +148,10 @@ export default {
         },
         async loadTasks() {
             const response = await this.axios.get('/spring_api/review-task')
+            this.tasks = response.data || []
+        },
+        async syncTasks() {
+            const response = await this.axios.post('/spring_api/review-task/sync')
             this.tasks = response.data || []
         },
         countByStatus(status) {

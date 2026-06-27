@@ -88,8 +88,11 @@ public class RecordController {
             record.setRiskAdvice(defaultIfBlank(recordRequest.getRiskAdvice(), defaultRiskAdvice(record.getRiskLevel(), record.getDisease())));
             record.setTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
             if (recordRequest.getLesionProfileId() != null) {
-                Optional<LesionProfile> lesionProfile = lesionProfileService.getById(recordRequest.getLesionProfileId());
-                lesionProfile.ifPresent(record::setLesionProfile);
+                Optional<LesionProfile> lesionProfile = lesionProfileService.getByIdAndUsername(recordRequest.getLesionProfileId(), recordRequest.getUsername());
+                if (lesionProfile.isEmpty()) {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+                record.setLesionProfile(lesionProfile.get());
             }
 
             Record saved = recordService.addRecord(record);
@@ -119,9 +122,14 @@ public class RecordController {
     }
 
     @GetMapping("lesion/{lesionProfileId}")
-    private ResponseEntity<List<Record>> queryRecordsByLesionProfile(@PathVariable("lesionProfileId") Long lesionProfileId){
+    private ResponseEntity<List<Record>> queryRecordsByLesionProfile(
+            @PathVariable("lesionProfileId") Long lesionProfileId,
+            @RequestParam String username){
         try{
-            return new ResponseEntity<>(recordService.getRecordsByLesionProfileId(lesionProfileId), HttpStatus.OK);
+            if (lesionProfileService.getByIdAndUsername(lesionProfileId, username).isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+            return new ResponseEntity<>(recordService.getRecordsByLesionProfileIdAndUsername(lesionProfileId, username), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
