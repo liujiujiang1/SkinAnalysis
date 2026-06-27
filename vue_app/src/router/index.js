@@ -3,8 +3,6 @@ import{
     createWebHistory
 } from "vue-router"
 
-import home from '../view/home.vue'
-
 import userLogin from "../view/userLogin.vue"
 
 import admin from "../view/admin.vue"
@@ -15,11 +13,13 @@ import chat from "../components/chat.vue"
 import analyse from "../components/analyse.vue"
 import history from "../components/history.vue"
 import profile from "../components/profile.vue"
+import diseaseWiki from "../components/diseaseWiki.vue"
 
 
 import manage from "../components/manage.vue"
 import statistics from "../components/statistics.vue"
 import records from "../components/records.vue"
+import feedback from "../components/feedback.vue"
 
 import page404 from "../components/page404.vue"
 
@@ -51,6 +51,10 @@ const routes = [
             {
                 path: "/user/profile",
                 component: profile
+            },
+            {
+                path: "/user/wiki",
+                component: diseaseWiki
             }
         ],
         beforeEnter: (from, to, next)=>{
@@ -93,6 +97,14 @@ const routes = [
             {
                 path: "/admin/background/records",
                 component: records
+            },
+            {
+                path: "/admin/background/wiki",
+                component: diseaseWiki
+            },
+            {
+                path: "/admin/background/feedback",
+                component: feedback
             }
         ],
         beforeEnter: (from, to, next)=>{

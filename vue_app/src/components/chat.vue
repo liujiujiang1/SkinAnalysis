@@ -53,6 +53,7 @@ import axios from 'axios';
 import { ChatDotRound, Promotion } from '@element-plus/icons-vue';
 
 import {api_key} from '../../zhipu_api-key.js'
+import { diseaseMap, diseaseName } from '../data/diseaseKnowledge'
 
 export default {
     components: {
@@ -63,7 +64,8 @@ export default {
         return {
             newMessage: '',
             messages: [{content: '您好，很高兴为您服务！请问您有什么需要帮助的吗？', sender: 'bot'}],
-            loading: false
+            loading: false,
+            latestDiagnosis: null
         };
     },
     methods: {
@@ -104,12 +106,14 @@ export default {
         },
         async getBotReply(message) {
             try {
+                const context = this.buildDiagnosisContext()
                 const response = await axios.post(
                     'https://open.bigmodel.cn/api/paas/v4/chat/completions',
                     {
                         model: 'glm-4-flash',
                         messages: [
                             {role: 'system', content: '你是一位专业的皮肤科医生，请用专业、友好的口吻回答用户关于皮肤健康的问题。'},
+                            {role: 'system', content: context},
                             {role: 'user', content: message}
                         ]
                     },
@@ -129,9 +133,26 @@ export default {
             if (this.$refs.chatMessages) {
                 this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight;
             }
+        },
+        async loadLatestDiagnosis() {
+            const username = sessionStorage.getItem('user_name')
+            if (!username) return
+            const response = await this.axios.get(`/spring_api/record/user/${username}`)
+            this.latestDiagnosis = (response.data || [])[0] || null
+        },
+        buildDiagnosisContext() {
+            if (!this.latestDiagnosis) {
+                return '当前用户暂无最近诊断记录。'
+            }
+            const code = this.latestDiagnosis.disease
+            const knowledge = diseaseMap[code]
+            const probability = Number(this.latestDiagnosis.probability || 0).toFixed(2)
+            const advice = knowledge ? knowledge.advice.join('；') : ''
+            return `用户最近一次诊断结果：${diseaseName(code)}（${code}），概率 ${probability}%。疾病背景：${knowledge?.intro || ''} 建议重点：${advice}`
         }
     },
     mounted() {
+        this.loadLatestDiagnosis();
         this.scrollToBottom();
     }
 };

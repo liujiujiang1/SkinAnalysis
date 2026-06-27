@@ -24,6 +24,10 @@
                                 <el-icon class="menu-icon"><UserFilled /></el-icon>
                                 <span class="menu-text">个人资料</span>
                             </el-menu-item>
+                            <el-menu-item index="4" class="menu-item">
+                                <el-icon class="menu-icon"><Reading /></el-icon>
+                                <span class="menu-text">疾病百科</span>
+                            </el-menu-item>
                         </el-menu>
                     </el-col>
                 </el-row>
@@ -102,7 +106,7 @@
 </template>
 
 <script lang="ts">
-import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled, Clock, UserFilled } from '@element-plus/icons-vue';
+import { Menu, Search, ChatDotRound, SwitchButton, Close, WarningFilled, Clock, UserFilled, Reading } from '@element-plus/icons-vue';
 
 export default {
     components: {
@@ -113,7 +117,8 @@ export default {
         Close,
         WarningFilled,
         Clock,
-        UserFilled
+        UserFilled,
+        Reading
     },
     name: "backend",
     data() {
@@ -153,6 +158,8 @@ export default {
                 case "2":   this.$router.push("/user/history");
                 break;
                 case "3":   this.$router.push("/user/profile");
+                break;
+                case "4":   this.$router.push("/user/wiki");
                 break;
             }
         },

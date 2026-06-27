@@ -14,6 +14,22 @@
                 <el-input v-model="recordSearch" class="record-search" placeholder="按用户名搜索" clearable />
             </div>
 
+            <div class="filter-bar">
+                <el-select v-model="diseaseFilter" class="disease-filter" placeholder="疾病类型" clearable>
+                    <el-option v-for="item in diseaseOptions" :key="item.code" :label="item.name" :value="item.code" />
+                </el-select>
+                <el-date-picker
+                    v-model="dateRange"
+                    type="daterange"
+                    value-format="YYYY-MM-DD"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    class="date-filter"
+                />
+                <el-button type="primary" @click="loadRecords">筛选</el-button>
+                <el-button type="success" @click="exportCsv">导出 CSV</el-button>
+            </div>
+
             <el-table :data="pagedRecords" stripe class="records-table desktop-table">
                 <el-table-column label="序号" width="80" align="center">
                     <template #default="{ $index }">
@@ -108,12 +124,17 @@
 </template>
 
 <script>
+import { diseaseKnowledge, diseaseName } from '../data/diseaseKnowledge'
+
 export default {
     name: "records",
     data() {
         return {
             records: [],
             recordSearch: '',
+            diseaseFilter: '',
+            dateRange: [],
+            diseaseOptions: diseaseKnowledge,
             currentPage: 1,
             pageSize: 10,
             isMobile: false,
@@ -173,14 +194,37 @@ export default {
             this.isMobile = window.innerWidth <= 720
         },
         async loadRecords() {
-            const res = await this.axios.get('/spring_api/record/query')
+            const res = await this.axios.get('/spring_api/record/search', { params: this.buildFilterParams() })
             this.records = res.data || []
+            this.currentPage = 1
+        },
+        buildFilterParams() {
+            const params = {}
+            if (this.recordSearch.trim()) params.username = this.recordSearch.trim()
+            if (this.diseaseFilter) params.disease = this.diseaseFilter
+            if (this.dateRange && this.dateRange.length === 2) {
+                params.startDate = this.dateRange[0]
+                params.endDate = this.dateRange[1]
+            }
+            return params
+        },
+        async exportCsv() {
+            const response = await this.axios.get('/spring_api/record/export', {
+                params: this.buildFilterParams(),
+                responseType: 'blob'
+            })
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }))
+            const link = document.createElement('a')
+            link.href = url
+            link.download = 'diagnosis-records.csv'
+            link.click()
+            window.URL.revokeObjectURL(url)
         },
         getRowIndex(index) {
             return (this.currentPage - 1) * this.pageSize + index + 1
         },
         diseaseName(code) {
-            return this.diseaseMap[code] || code || '未知'
+            return diseaseName(code)
         },
         formatProbability(value) {
             return Number(value || 0).toFixed(2)
@@ -250,6 +294,22 @@ export default {
 
 .record-search {
     max-width: 280px;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.disease-filter {
+    width: 180px;
+}
+
+.date-filter {
+    width: 260px;
 }
 
 .thumb {
@@ -469,6 +529,16 @@ export default {
     .record-search {
         max-width: none;
         margin-top: 8px;
+    }
+
+    .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .disease-filter,
+    .date-filter {
+        width: 100%;
     }
 
     :deep(.records-table) {

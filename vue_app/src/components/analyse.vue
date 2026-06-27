@@ -113,6 +113,20 @@
                     <p>上传图片后将显示诊疗建议</p>
                 </div>
             </div>
+            <div class="feedback-section" v-if="latestRecordId">
+                <div class="section-header">
+                    <h3>结果反馈</h3>
+                </div>
+                <el-radio-group v-model="feedbackForm.accurate" class="feedback-radios">
+                    <el-radio-button :label="true">准确</el-radio-button>
+                    <el-radio-button :label="false">不准确</el-radio-button>
+                </el-radio-group>
+                <el-select v-model="feedbackForm.realDisease" placeholder="真实诊断结果" clearable class="feedback-input">
+                    <el-option v-for="item in diseaseOptions" :key="item.code" :label="item.name" :value="item.code" />
+                </el-select>
+                <el-input v-model="feedbackForm.comment" type="textarea" :rows="2" placeholder="补充说明，可选" class="feedback-input" />
+                <el-button type="primary" @click="submitFeedback">提交反馈</el-button>
+            </div>
         </div>
     </div>
 </template>
@@ -120,6 +134,7 @@
 <script lang="ts">
 import {ElMessageBox} from "element-plus";
 import { Picture, Upload, UploadFilled, Document, FirstAidKit, TrendCharts } from '@element-plus/icons-vue';
+import { diseaseKnowledge } from '../data/diseaseKnowledge'
 export default {
     components: {
         Picture,
@@ -139,6 +154,13 @@ export default {
             },
             imageData: '',
             selectedIndex: 0,
+            latestRecordId: null,
+            diseaseOptions: diseaseKnowledge,
+            feedbackForm: {
+                accurate: true,
+                realDisease: '',
+                comment: ''
+            },
             results: [
                 { code: 'NA', name: '尚无结果', probability: 0, adviceIndex: 0 },
                 { code: 'NA2', name: '尚无结果', probability: 0, adviceIndex: 0 },
@@ -252,7 +274,7 @@ export default {
         },
         async sendRecord(topResult){
             const advice = this.adviceList[topResult.adviceIndex] || this.adviceList[0]
-            this.axios.post(
+            const response = await this.axios.post(
                 '/spring_api/record',
             {
                 'username': sessionStorage.getItem('user_name'),
@@ -269,6 +291,27 @@ export default {
               }
             }
           );
+            this.latestRecordId = response.data?.id || null
+            this.feedbackForm = {
+                accurate: true,
+                realDisease: topResult.code,
+                comment: ''
+            }
+        },
+        async submitFeedback() {
+            if (!this.latestRecordId) return
+            await this.axios.post('/spring_api/feedback', {
+                recordId: this.latestRecordId,
+                username: sessionStorage.getItem('user_name'),
+                accurate: this.feedbackForm.accurate,
+                realDisease: this.feedbackForm.realDisease,
+                comment: this.feedbackForm.comment
+            })
+            ElMessageBox.alert("反馈已提交，感谢你的标注。", {
+                title: "提示",
+                confirmButtonText: "确定",
+                type: "success"
+            })
         }
     }
 };
@@ -306,6 +349,10 @@ export default {
 
     .advice-section {
         order: 3;
+    }
+
+    .feedback-section {
+        order: 4;
     }
 
     .section-header {
@@ -487,6 +534,21 @@ export default {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
+    .feedback-section {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .feedback-radios,
+    .feedback-input {
+        width: 100%;
+    }
+
     .advice-content {
         display: flex;
         flex-direction: column;
@@ -597,6 +659,12 @@ export default {
             order: 3;
         }
 
+        .feedback-section {
+            width: 320px;
+            flex-shrink: 0;
+            order: 4;
+        }
+
         .section-header h3 {
             font-size: 20px;
         }
@@ -629,6 +697,10 @@ export default {
         }
 
         .advice-section {
+            width: 380px;
+        }
+
+        .feedback-section {
             width: 380px;
         }
 
@@ -685,7 +757,8 @@ export default {
 
         .results-section,
         .image-section,
-        .advice-section {
+        .advice-section,
+        .feedback-section {
             padding: 12px;
             border-radius: 10px;
         }

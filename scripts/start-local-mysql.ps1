@@ -54,22 +54,36 @@ if (!$existing) {
 
 $ready = $false
 $passwordArg = $null
-for ($i = 0; $i -lt 30; $i++) {
+$noPasswordArgs = @("--host=127.0.0.1", "--port=3308", "--user=root", "--protocol=tcp")
+$rootPasswordArgs = $noPasswordArgs + "--password=root"
+
+function Test-MysqlConnection {
+    param([string[]]$MysqlArgs)
+
+    $oldErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
     try {
-        & $mysql --host=127.0.0.1 --port=3308 --user=root --protocol=tcp -e "SELECT 1" | Out-Null
+        & $mysql @MysqlArgs -e "SELECT 1" *> $null
+        return $LASTEXITCODE -eq 0
+    } finally {
+        $ErrorActionPreference = $oldErrorActionPreference
+    }
+}
+
+for ($i = 0; $i -lt 30; $i++) {
+    if (Test-MysqlConnection $noPasswordArgs) {
         $ready = $true
         $passwordArg = $null
         break
-    } catch {
-        try {
-            & $mysql --host=127.0.0.1 --port=3308 --user=root --password=root --protocol=tcp -e "SELECT 1" | Out-Null
-            $ready = $true
-            $passwordArg = "--password=root"
-            break
-        } catch {
-            Start-Sleep -Seconds 1
-        }
     }
+
+    if (Test-MysqlConnection $rootPasswordArgs) {
+        $ready = $true
+        $passwordArg = "--password=root"
+        break
+    }
+
+    Start-Sleep -Seconds 1
 }
 
 if (!$ready) {
@@ -78,7 +92,11 @@ if (!$ready) {
 
 $commonArgs = @("--host=127.0.0.1", "--port=3308", "--user=root", "--protocol=tcp", "--default-character-set=utf8mb4")
 if ($passwordArg) {
-    $commonArgs += $passwordArg
+    $oldMysqlPwd = $env:MYSQL_PWD
+    $env:MYSQL_PWD = "root"
+} else {
+    $oldMysqlPwd = $env:MYSQL_PWD
+    Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
 }
 
 $tableCount = (& $mysql @commonArgs --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'SkinAnalysis' AND table_name = 'user';" 2>$null | Select-Object -First 1)
@@ -105,3 +123,9 @@ foreach ($column in $recordColumns) {
 }
 
 Write-Host "Local MySQL is ready at 127.0.0.1:3308, database SkinAnalysis, user root, password root."
+
+if ($null -ne $oldMysqlPwd) {
+    $env:MYSQL_PWD = $oldMysqlPwd
+} else {
+    Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+}

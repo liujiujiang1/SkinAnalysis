@@ -9,8 +9,8 @@ public class Record {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne(targetEntity = UserInfo.class)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.EAGER, optional = false, targetEntity = UserInfo.class)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_record_user"))
     private UserInfo user;
     private String disease;
     private Timestamp time;

@@ -3,7 +3,9 @@ package edu.whut.skinhealth.dao;
 import edu.whut.skinhealth.entity.Record;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,6 +30,11 @@ public interface RecordRepository extends JpaRepository<Record, Long>, JpaSpecif
 
     @Query(value = "SELECT u.district, COUNT(*) FROM record r JOIN `user` u ON r.user_id = u.id GROUP BY u.district ORDER BY COUNT(*) DESC", nativeQuery = true)
     List<Object> countRecordsByDistrict();
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE r FROM `record` r LEFT JOIN `user` u ON r.user_id = u.id WHERE u.id IS NULL", nativeQuery = true)
+    int deleteRecordsWithMissingUser();
 
     @Query(value="SELECT\n" +
             "    CASE\n" +

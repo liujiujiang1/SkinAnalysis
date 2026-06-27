@@ -663,6 +663,42 @@ ALTER TABLE `record`
   ADD COLUMN `advice_brief` text NULL,
   ADD COLUMN `advice_treatment` text NULL;
 
+ALTER TABLE `user`
+  ADD COLUMN `security_question` varchar(255) NULL DEFAULT '是否为患者',
+  ADD COLUMN `security_answer` varchar(255) NULL DEFAULT '否';
+
+UPDATE `user`
+SET
+  `state` = CASE WHEN `state` IS NULL OR TRIM(`state`) = '' THEN '正常' ELSE `state` END,
+  `gender` = CASE WHEN `gender` IS NULL OR TRIM(`gender`) = '' THEN '女' ELSE `gender` END,
+  `security_question` = CASE WHEN `security_question` IS NULL OR TRIM(`security_question`) = '' THEN '是否为患者' ELSE `security_question` END,
+  `security_answer` = CASE WHEN `security_answer` IS NULL OR TRIM(`security_answer`) = '' THEN '否' ELSE `security_answer` END;
+
+ALTER TABLE `user`
+  MODIFY COLUMN `state` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '正常',
+  MODIFY COLUMN `gender` varchar(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '女',
+  MODIFY COLUMN `security_question` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '是否为患者',
+  MODIFY COLUMN `security_answer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '否';
+
+DELETE r FROM `record` r
+LEFT JOIN `user` u ON r.`user_id` = u.`id`
+WHERE u.`id` IS NULL;
+
+ALTER TABLE `record`
+  ADD CONSTRAINT `fk_record_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
+
+CREATE TABLE IF NOT EXISTS `feedback` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `record_id` bigint NULL,
+  `username` varchar(255) NULL,
+  `predicted_disease` varchar(255) NULL,
+  `accurate` bit(1) NULL,
+  `real_disease` varchar(255) NULL,
+  `feedback_time` datetime NULL,
+  `comment` text NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';

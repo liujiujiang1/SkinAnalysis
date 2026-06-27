@@ -18,6 +18,8 @@ public class User {
     private String gender;
     private String district;
     private Date birthday;
+    private String securityQuestion;
+    private String securityAnswer;
 
 
     public User(){
@@ -88,5 +90,21 @@ public class User {
 
     public void setBirthday(Date birthday) {
         this.birthday = birthday;
+    }
+
+    public String getSecurityQuestion() {
+        return securityQuestion;
+    }
+
+    public void setSecurityQuestion(String securityQuestion) {
+        this.securityQuestion = securityQuestion;
+    }
+
+    public String getSecurityAnswer() {
+        return securityAnswer;
+    }
+
+    public void setSecurityAnswer(String securityAnswer) {
+        this.securityAnswer = securityAnswer;
     }
 }

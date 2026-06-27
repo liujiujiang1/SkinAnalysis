@@ -75,6 +75,11 @@
                                 注 册
                             </el-button>
                         </el-form-item>
+                        <el-form-item>
+                            <el-button class="forgot-btn" @click="showResetDialog = true" size="large">
+                                忘记密码
+                            </el-button>
+                        </el-form-item>
                     </el-form>
                 </div>
             </div>
@@ -151,6 +156,12 @@
                     >
                     </el-input>
                 </el-form-item>
+                <el-form-item label="密保问题" prop="securityQuestion">
+                    <el-input class="dialog_input" v-model="newForm.securityQuestion" placeholder="例如：我的出生城市是？" clearable />
+                </el-form-item>
+                <el-form-item label="密保答案" prop="securityAnswer">
+                    <el-input class="dialog_input" v-model="newForm.securityAnswer" placeholder="忘记密码时用于验证" clearable />
+                </el-form-item>
             </el-form>
 
             <template #footer>
@@ -171,6 +182,31 @@
                     >
                         确 定
                     </el-button>
+                </div>
+            </template>
+        </el-dialog>
+        <el-dialog title="重置密码" v-model="showResetDialog" width="420px" :close-on-click-modal="false">
+            <el-form label-position="top" :model="resetForm">
+                <el-form-item label="用户名">
+                    <el-input v-model="resetForm.username" clearable />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" plain @click="loadSecurityQuestion">获取密保问题</el-button>
+                </el-form-item>
+                <el-form-item label="密保问题">
+                    <el-input v-model="resetForm.securityQuestion" disabled />
+                </el-form-item>
+                <el-form-item label="密保答案">
+                    <el-input v-model="resetForm.securityAnswer" clearable />
+                </el-form-item>
+                <el-form-item label="新密码">
+                    <el-input v-model="resetForm.newPassword" type="password" show-password />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="showResetDialog = false">取消</el-button>
+                    <el-button type="primary" @click="resetPassword">确认重置</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -195,16 +231,25 @@ export default {
             errorCheck: false,
             passCheck: false,
             showSignUpDialog: false,
+            showResetDialog: false,
             form: {
                 username: '',
                 password: '',
             },
+            resetForm: {
+                username: '',
+                securityQuestion: '',
+                securityAnswer: '',
+                newPassword: ''
+            },
             newForm: {
                 username: '',
                 password: '',
-                gender: '',
+                gender: '女',
                 birthday: '2000-01-01',
                 district: '',
+                securityQuestion: '',
+                securityAnswer: '',
             },
             genderOptions: [
                 {
@@ -226,13 +271,19 @@ export default {
             },
             newRules: {
                 username: [
-                    { required: true, message: '账号不能为空', trigger: 'blur' }
+                    { required: true, whitespace: true, message: '账号不能为空', trigger: 'blur' }
                 ],
                 password: [
-                    { required: true, message: '密码不能为空', trigger: 'blur' }
+                    { required: true, whitespace: true, message: '密码不能为空', trigger: 'blur' }
                 ],
                 gender: [
                     { required: true, message: '性别不能为空', trigger: 'blur' }
+                ],
+                securityQuestion: [
+                    { required: true, whitespace: true, message: '密保问题不能为空', trigger: 'blur' }
+                ],
+                securityAnswer: [
+                    { required: true, whitespace: true, message: '密保答案不能为空', trigger: 'blur' }
                 ]
             }
         }
@@ -274,6 +325,13 @@ export default {
                                 this.passCheck = false;
                                 this.existCheck = false;
                             }, 1000)
+                        } else if (response.data === "Frozen" || response.data === "Cancelled") {
+                            this.loading = false
+                            ElMessageBox.alert(response.data === "Frozen" ? "该用户已被冻结，暂时不能登录。" : "该用户已注销，账号不可用。", {
+                                title: "提示",
+                                confirmButtonText: "确定",
+                                type: "warning"
+                            })
                         } else if (response.data === "NotExist") {
                             this.timer = setTimeout(() => {
                                 this.loading = false
@@ -295,12 +353,22 @@ export default {
             }
         },
         submit() {
+            this.$refs.newFormRef.validate((valid) => {
+                if (!valid) {
+                    return
+                }
+                this.submitSignup()
+            })
+        },
+        submitSignup() {
             let newUser = {
-                'username': this.newForm.username,
+                'username': this.newForm.username.trim(),
                 'password': this.newForm.password,
-                'gender': this.newForm.gender,
+                'gender': this.newForm.gender || '女',
                 'birthday': this.newForm.birthday,
-                'district': this.newForm.district
+                'district': this.newForm.district,
+                'securityQuestion': this.newForm.securityQuestion.trim(),
+                'securityAnswer': this.newForm.securityAnswer.trim()
             }
 
             this.axios.post('/spring_api/user', newUser)
@@ -313,13 +381,15 @@ export default {
                             type: "success"
                         })
                         this.showSignUpDialog = false;
-                        this.newForm.username = ''
-                        this.newForm.password = ''
-                        this.newForm.gender = ''
-                        this.newForm.birthday = '2000-01-01'
-                        this.newForm.district = ''
+                        this.resetSignupForm()
                     } else if (res === "Exist") {
                         ElMessageBox.alert("已存在相同账号，请换个账号名重试！", {
+                            title: "提示",
+                            confirmButtonText: "返回",
+                            type: "warning"
+                        })
+                    } else if (res === "InfoEmpty" || res === "SecurityEmpty") {
+                        ElMessageBox.alert("请完整填写注册信息。", {
                             title: "提示",
                             confirmButtonText: "返回",
                             type: "warning"
@@ -341,13 +411,57 @@ export default {
                         })
                 })
         },
-        cancelHandle() {
-            this.showSignUpDialog = false
+        resetSignupForm() {
             this.newForm.username = ''
             this.newForm.password = ''
-            this.newForm.gender = ''
+            this.newForm.gender = '女'
             this.newForm.birthday = '2000-01-01'
             this.newForm.district = ''
+            this.newForm.securityQuestion = ''
+            this.newForm.securityAnswer = ''
+            if (this.$refs.newFormRef) {
+                this.$refs.newFormRef.clearValidate()
+            }
+        },
+        cancelHandle() {
+            this.showSignUpDialog = false
+            this.resetSignupForm()
+        },
+        loadSecurityQuestion() {
+            if (!this.resetForm.username) {
+                ElMessageBox.alert("请先输入用户名。", { title: "提示", confirmButtonText: "确定", type: "warning" })
+                return
+            }
+            this.axios.get(`/spring_api/user/${this.resetForm.username}/security-question`)
+                .then((response) => {
+                    if (response.data === "NotExist") {
+                        ElMessageBox.alert("用户不存在。", { title: "提示", confirmButtonText: "确定", type: "warning" })
+                    } else if (response.data === "Cancelled") {
+                        ElMessageBox.alert("该用户已注销，无法重置密码。", { title: "提示", confirmButtonText: "确定", type: "warning" })
+                    } else if (!response.data) {
+                        ElMessageBox.alert("该用户未设置密保问题，请联系管理员重置密码。", { title: "提示", confirmButtonText: "确定", type: "warning" })
+                    } else {
+                        this.resetForm.securityQuestion = response.data
+                    }
+                })
+        },
+        resetPassword() {
+            if (!this.resetForm.username.trim() || !this.resetForm.securityAnswer.trim() || !this.resetForm.newPassword.trim()) {
+                ElMessageBox.alert("用户名、密保答案和新密码不能为空。", { title: "提示", confirmButtonText: "确定", type: "warning" })
+                return
+            }
+            this.axios.post('/spring_api/user/reset-password', this.resetForm)
+                .then((response) => {
+                    if (response.data === "Success") {
+                        ElMessageBox.alert("密码已重置，请使用新密码登录。", { title: "提示", confirmButtonText: "确定", type: "success" })
+                        this.showResetDialog = false
+                        this.resetForm = { username: '', securityQuestion: '', securityAnswer: '', newPassword: '' }
+                    } else if (response.data === "AnswerError") {
+                        ElMessageBox.alert("密保答案不正确。", { title: "提示", confirmButtonText: "确定", type: "error" })
+                    } else {
+                        ElMessageBox.alert("重置失败，请检查信息后重试。", { title: "提示", confirmButtonText: "确定", type: "error" })
+                    }
+                })
         }
     }
 }
@@ -549,6 +663,15 @@ export default {
         min-height: 52px;
         min-width: 52px;
         color: white;
+    }
+
+    .forgot-btn {
+        width: 100%;
+        height: 48px;
+        border-radius: 12px;
+        border: 1px solid #CBD5E1;
+        color: #475569;
+        background: #FFFFFF;
     }
 
     .register-btn:hover {

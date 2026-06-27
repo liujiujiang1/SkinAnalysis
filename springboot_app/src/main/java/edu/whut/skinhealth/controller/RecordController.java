@@ -8,12 +8,16 @@ import edu.whut.skinhealth.po.UserInfo;
 import edu.whut.skinhealth.service.RecordService;
 import edu.whut.skinhealth.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,9 +53,12 @@ public class RecordController {
     }
 
     @PostMapping
-    private ResponseEntity<String> addRecord(@RequestBody RecordRequest recordRequest){
+    private ResponseEntity<Record> addRecord(@RequestBody RecordRequest recordRequest){
         try{
             User user = userService.findUserByUsername(recordRequest.getUsername());
+            if (user == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
             UserInfo userInfo = new UserInfo();
             userInfo.setId(user.getId());
             userInfo.setUsername(user.getUsername());
@@ -69,10 +76,9 @@ public class RecordController {
             record.setAdviceTreatment(recordRequest.getAdviceTreatment());
             record.setTime(new Timestamp(new Date(System.currentTimeMillis()).getTime()));
 
-            recordService.addRecord(record);
-            return new ResponseEntity<>("Success", HttpStatus.OK);
+            return new ResponseEntity<>(recordService.addRecord(record), HttpStatus.OK);
         }catch(Exception e) {
-            return new ResponseEntity<>(e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -103,6 +109,48 @@ public class RecordController {
         }
     }
 
+    @GetMapping("search")
+    private ResponseEntity<List<Record>> searchRecords(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String disease,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate){
+        try{
+            return new ResponseEntity<>(recordService.searchRecords(
+                    username,
+                    disease,
+                    toStartTimestamp(startDate),
+                    toEndTimestamp(endDate)
+            ), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("export")
+    private ResponseEntity<byte[]> exportRecords(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String disease,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate){
+        try{
+            List<Record> records = recordService.searchRecords(
+                    username,
+                    disease,
+                    toStartTimestamp(startDate),
+                    toEndTimestamp(endDate)
+            );
+            String csv = buildCsv(records);
+            byte[] bytes = ("\uFEFF" + csv).getBytes(StandardCharsets.UTF_8);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=diagnosis-records.csv");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("summary")
     private ResponseEntity<Map<String, Long>> querySummary(){
         try{
@@ -127,6 +175,43 @@ public class RecordController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private Timestamp toStartTimestamp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Timestamp.valueOf(LocalDate.parse(value).atStartOfDay());
+    }
+
+    private Timestamp toEndTimestamp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Timestamp.valueOf(LocalDate.parse(value).atTime(23, 59, 59));
+    }
+
+    private String buildCsv(List<Record> records) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("ID,Username,Disease,Probability,Time,Gender,District,Birthday\n");
+        for (Record record : records) {
+            UserInfo user = record.getUser();
+            builder.append(csv(record.getId()))
+                    .append(",").append(csv(user == null ? "" : user.getUsername()))
+                    .append(",").append(csv(record.getDisease()))
+                    .append(",").append(csv(record.getProbability()))
+                    .append(",").append(csv(record.getTime()))
+                    .append(",").append(csv(user == null ? "" : user.getGender()))
+                    .append(",").append(csv(user == null ? "" : user.getDistrict()))
+                    .append(",").append(csv(user == null ? "" : user.getBirthday()))
+                    .append("\n");
+        }
+        return builder.toString();
+    }
+
+    private String csv(Object value) {
+        String text = value == null ? "" : String.valueOf(value);
+        return "\"" + text.replace("\"", "\"\"") + "\"";
     }
 
 

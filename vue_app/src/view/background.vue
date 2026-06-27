@@ -32,6 +32,18 @@
                         </template>
                         <span class="menu-text" v-show="!isCollapsed">诊断记录</span>
                     </el-menu-item>
+                    <el-menu-item index="3">
+                        <template #icon>
+                            <el-icon><Reading /></el-icon>
+                        </template>
+                        <span class="menu-text" v-show="!isCollapsed">疾病百科</span>
+                    </el-menu-item>
+                    <el-menu-item index="4">
+                        <template #icon>
+                            <el-icon><ChatLineSquare /></el-icon>
+                        </template>
+                        <span class="menu-text" v-show="!isCollapsed">反馈标注</span>
+                    </el-menu-item>
                 </el-menu>
             </el-aside>
             
@@ -106,7 +118,7 @@
 </template>
 
 <script lang="ts">
-import { User, DataAnalysis, Tickets, SwitchButton, Fold, Close, WarningFilled } from '@element-plus/icons-vue';
+import { User, DataAnalysis, Tickets, SwitchButton, Fold, Close, WarningFilled, Reading, ChatLineSquare } from '@element-plus/icons-vue';
 
 export default {
     name: "backend",
@@ -117,7 +129,9 @@ export default {
         SwitchButton,
         Fold,
         Close,
-        WarningFilled
+        WarningFilled,
+        Reading,
+        ChatLineSquare
     },
     data() {
         return {
@@ -134,6 +148,8 @@ export default {
             const path = this.$route.path;
             if (path.includes('/statistics')) return '1';
             if (path.includes('/records')) return '2';
+            if (path.includes('/wiki')) return '3';
+            if (path.includes('/feedback')) return '4';
             return '0';
         }
     },
@@ -163,6 +179,10 @@ export default {
                 case "1":   this.$router.push("/admin/background/statistics");
                 break;
                 case "2":   this.$router.push("/admin/background/records");
+                break;
+                case "3":   this.$router.push("/admin/background/wiki");
+                break;
+                case "4":   this.$router.push("/admin/background/feedback");
                 break;
             }
         },

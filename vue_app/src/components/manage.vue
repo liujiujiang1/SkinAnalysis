@@ -425,17 +425,21 @@ export default {
         },
         
         editUser(row) {
-            this.newForm = { ...row }
+            this.newForm = {
+                ...row,
+                gender: row.gender || '女',
+                state: row.state || '正常'
+            }
             this.showDialog = true
         },
         submit() {
             let data = {
                 'username': this.newForm.username,
                 'password': this.newForm.password,
-                'gender': this.newForm.gender,
+                'gender': this.newForm.gender || '女',
                 'birthday': this.newForm.birthday,
                 'district': this.newForm.district,
-                'state': this.newForm.state
+                'state': this.newForm.state || '正常'
             }
 
             this.axios.put("/spring_api/user", data)
